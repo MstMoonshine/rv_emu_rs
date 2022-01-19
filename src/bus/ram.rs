@@ -3,11 +3,11 @@ use super::mmio_device::MMIODevice;
 
 pub struct RAMDevice {
 	ram: RefCell<Vec<u32>>,
-	size: usize,
+	pub size: usize,
 }
 
 impl RAMDevice {
-	fn new(size: usize) -> Self {
+	pub fn new(size: usize) -> Self {
 		Self {
 			ram: RefCell::new(vec![0_u32; size]),
 			size

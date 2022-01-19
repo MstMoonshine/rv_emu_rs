@@ -1,5 +1,5 @@
 mod bus;
 
 fn main() {
-    
+	()
 }

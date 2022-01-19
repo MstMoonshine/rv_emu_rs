@@ -3,11 +3,11 @@ use super::mmio_device::MMIODevice;
 
 pub struct ROMDevice {
 	rom: RefCell<Vec<u32>>,
-	size: usize,
+	pub size: usize,
 }
 
 impl ROMDevice {
-	fn new(file: &[u32]) -> Self {
+	pub fn new(file: &[u32]) -> Self {
 		Self {
 			rom: RefCell::new(Vec::from(file)),
 			size: file.len(),
