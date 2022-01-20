@@ -2,8 +2,8 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum BusError {
-	LoadAddrMisaligned(usize),
-	StoreAddrMisaligned(usize, u32),
+    LoadAddrMisaligned(usize),
+    StoreAddrMisaligned(usize, u32),
 }
 
 impl std::error::Error for BusError {}
