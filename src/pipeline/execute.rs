@@ -42,15 +42,12 @@ impl<'a> Execute<'a> {
 
 impl<'a> PipelineStage for Execute<'a> {
     fn compute(&self) {
-        if self.should_stall() {
-            return;
-        }
+        if self.should_stall() { return; }
 
         let de_val = self.prev_stage.get_decoded_values_out();
 
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
-        let imm32 = (de_val.imm11_0 << 21) as i32 >> 21;
 
         match ALUOperation::try_from(de_val.funt3) {
             Ok(ALUOperation::ADD) => {
@@ -62,7 +59,7 @@ impl<'a> PipelineStage for Execute<'a> {
                     };
                     self.alu_result.replace(result);
                 } else {
-                    let result = (de_val.rs1 as i32 + imm32) as u32;
+                    let result = (de_val.rs1 as i32 + de_val.imm32) as u32;
                     self.alu_result.replace(result);
                 }
             }

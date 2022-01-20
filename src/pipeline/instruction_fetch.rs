@@ -34,9 +34,7 @@ impl InstructionFetch {
 
 impl PipelineStage for InstructionFetch {
     fn compute(&self) {
-        if self.should_stall() {
-            return;
-        }
+        if self.should_stall() { return; }
 
         let addr = self.pc.borrow().0 as usize;
         let ins = self.bus.read(addr).expect("Instruction Fetch Error");
