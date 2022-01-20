@@ -1,19 +1,18 @@
-use std::{sync::Arc, cell::RefCell, ops::Deref};
+use std::{sync::Arc, cell::RefCell};
 use crate::register::{Register32, NUM_REGISTER};
-
 use super::{Stage, instruction_fetch::InstructionFetch, PipelineStage};
 
 #[derive(Debug, Clone)]
 pub struct DecodedValues {
-	instruction: 	u32,
-	opcode: 		u32,
-	rd: 			u32,
-	funt3: 			u32,
-	rs1: 			u32,
-	rs2: 			u32,
-	imm11_0:		u32,
-	funt7: 			u32,
-	shamt: 			u32,
+	pub instruction: 	u32,
+	pub opcode: 		u32,
+	pub rd: 			u32,
+	pub funt3: 			u32,
+	pub rs1: 			u32,
+	pub rs2: 			u32,
+	pub imm11_0:		u32,
+	pub funt7: 			u32,
+	pub shamt: 			u32,
 }
 
 impl DecodedValues {
@@ -87,6 +86,6 @@ impl<'a> PipelineStage for Decode<'a> {
     }
 
     fn should_stall(&self) -> bool {
-        !matches!(self.stage.deref().borrow().to_owned(), Stage::DE)
+        !matches!(self.stage.borrow().to_owned(), Stage::DE)
     }
 }

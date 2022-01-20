@@ -1,4 +1,4 @@
-use std::{sync::Arc, cell::RefCell, ops::Deref};
+use std::{sync::Arc, cell::RefCell};
 use crate::{bus::Bus, register::Register32};
 use super::{PipelineStage, Stage};
 
@@ -50,7 +50,7 @@ impl PipelineStage for InstructionFetch {
     }
 
     fn should_stall(&self) -> bool {
-		!matches!(self.stage.deref().borrow().to_owned(), Stage::DE)
+		!matches!(self.stage.borrow().to_owned(), Stage::DE)
     }
 }
 

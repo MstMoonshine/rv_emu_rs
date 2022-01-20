@@ -1,5 +1,6 @@
 pub mod instruction_fetch;
 pub mod decode;
+pub mod execute;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Stage {
@@ -21,10 +22,14 @@ pub trait PipelineStage {
 fn test() {
     use std::{sync::Arc, cell::RefCell};
 
-    use crate::{bus::Bus, pipeline::{instruction_fetch::InstructionFetch, decode::Decode}};
+    use crate::{bus::Bus, pipeline::{instruction_fetch::InstructionFetch, decode::Decode, execute::Execute}};
 
 	fn show_de(stage_de: &Decode) {
 		println!("Decoded values: {:?}", stage_de.get_decoded_values_out());
+	}
+
+	fn show_exe(stage_exe: &Execute) {
+		println!("ALU Result: {:?}", stage_exe.get_alu_result_out());
 	}
 
 	let bus = Arc::new(Bus::new(
@@ -36,27 +41,33 @@ fn test() {
 		bus.clone(), 
 		stage.clone(),
 	);
-
 	let stage_de = Decode::new(
 		stage.clone(),
 		&stage_if,
 	);
+	let stage_exe = Execute::new(
+		stage.clone(),
+		&stage_de,
+	);
 
-	for _ in 0..10 {
+	for _ in 0..15 {
 
 		stage_if.compute();
 		stage_de.compute();
+		stage_exe.compute();
 
 		show_de(&stage_de);
+		show_exe(&stage_exe);
 
 		stage_if.latch_next();
 		stage_de.latch_next();
-
+		stage_exe.latch_next();
 
 		let current_stage = stage.borrow().to_owned();
 		let next_stage = match current_stage {
 			Stage::IF => Stage::DE,
-			Stage::DE => Stage::IF,
+			Stage::DE => Stage::EXE,
+			Stage::EXE => Stage::IF,
 			_ => Stage::IF,
 		};
 
