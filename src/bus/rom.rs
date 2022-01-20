@@ -1,16 +1,16 @@
 use std::cell::RefCell;
-use super::mmio_device::MMIODevice;
+use super::{mmio_device::MMIODevice, ADDR_ALIGN};
 
 pub struct ROMDevice {
 	rom: RefCell<Vec<u32>>,
-	pub size: usize,
+	size: usize,
 }
 
 impl ROMDevice {
 	pub fn new(file: &[u32]) -> Self {
 		Self {
 			rom: RefCell::new(Vec::from(file)),
-			size: file.len(),
+			size: file.len() * ADDR_ALIGN,
 		}
 	}
 }
