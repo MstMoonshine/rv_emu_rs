@@ -1,5 +1,7 @@
 [package]
 name = "rv_emu_rs"
+description = "A RISC-V 32-bit emulator written in Rust"
+author = "Monstrous Moonshine"
 version = "0.1.0"
 edition = "2021"
 
