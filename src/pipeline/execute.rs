@@ -50,7 +50,7 @@ impl<'a> PipelineStage for Execute<'a> {
 
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
-        let imm32 = de_val.imm11_0 as i32;
+        let imm32 = (de_val.imm11_0 << 21) as i32 >> 21;
 
         match ALUOperation::try_from(de_val.funt3) {
             Ok(ALUOperation::ADD) => {

@@ -35,7 +35,7 @@ fn test() {
         println!("ALU Result: {:?}", stage_exe.get_alu_result_out());
     }
 
-    let bus = Arc::new(Bus::new(&[0x00100093, 0x00200113, 0x002081b3]));
+    let bus = Arc::new(Bus::new(&[0x00100093, 0xfff00213, 0x00200113, 0x002081b3]));
     let stage = Arc::new(RefCell::new(Stage::IF));
 
     let stage_if = InstructionFetch::new(bus.clone(), stage.clone());
