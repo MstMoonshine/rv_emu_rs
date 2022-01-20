@@ -1,12 +1,10 @@
 use std::{sync::Arc, cell::RefCell, ops::Deref};
-
 use crate::{bus::Bus, register::Register32};
-
 use super::{PipelineStage, State};
 
 pub struct InstructionFetch {
 	bus: Arc<Bus>,
-	state: Arc<State>,
+	state: Arc<RefCell<State>>,
 
 	pc: RefCell<Register32>,
 	pc_ready: RefCell<Register32>,
@@ -16,7 +14,7 @@ pub struct InstructionFetch {
 }
 
 impl InstructionFetch {
-	pub fn new(bus: Arc<Bus>, state: Arc<State>) -> Self {
+	pub fn new(bus: Arc<Bus>, state: Arc<RefCell<State>>) -> Self {
 		Self {
 			bus: bus.clone(),
 			state: state.clone(),
@@ -29,21 +27,21 @@ impl InstructionFetch {
 		}
 	}
 
-	fn get_instruction_out(&self) -> Register32 {
+	pub fn get_instruction_out(&self) -> Register32 {
 		*self.instruction_ready.borrow()
 	}
 }
 
 impl PipelineStage for InstructionFetch {
     fn compute(&self) {
-		if !self.should_stall() {
-			let addr = self.pc.borrow().0 as usize;
-			let ins = self.bus.read(addr)
-				.expect("Instruction Fetch Error");
-			self.instruction.replace(Register32(ins));
+		if self.should_stall() { return; }
 
-			self.pc.replace(Register32(addr as u32 + 4));
-		}
+		let addr = self.pc.borrow().0 as usize;
+		let ins = self.bus.read(addr)
+			.expect("Instruction Fetch Error");
+		self.instruction.replace(Register32(ins));
+
+		self.pc.replace(Register32(addr as u32 + 4));
     }
 
     fn latch_next(&self) {
@@ -52,7 +50,7 @@ impl PipelineStage for InstructionFetch {
     }
 
     fn should_stall(&self) -> bool {
-		!matches!(self.state.deref(), State::IF)
+		!matches!(self.state.deref().borrow().to_owned(), State::DE)
     }
 }
 
@@ -68,9 +66,12 @@ fn test() {
 	}
 
 	let bus = Bus::new(&[0x1122_3344_u32, 0xdead_beef, 1, 2, 3, 4, 5, 0xaabbccdd, 0x44332211]);
-	let state = State::IF;
+	let state = Arc::new(RefCell::new(State::IF));
 
-	let stage_if = InstructionFetch::new(Arc::new(bus), Arc::new(state));
+	let stage_if = InstructionFetch::new(
+		Arc::new(bus), 
+		state.clone(),
+	);
 	show_if(&stage_if);
 
 	for i in 0..5 {
