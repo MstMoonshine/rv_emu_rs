@@ -1,7 +1,7 @@
 use std::{sync::Arc, cell::RefCell, ops::Deref};
 use crate::register::{Register32, NUM_REGISTER};
 
-use super::{State, instruction_fetch::InstructionFetch, PipelineStage};
+use super::{Stage, instruction_fetch::InstructionFetch, PipelineStage};
 
 #[derive(Debug, Clone)]
 pub struct DecodedValues {
@@ -33,7 +33,7 @@ impl DecodedValues {
 }
 
 pub struct Decode<'a> {
-	state: Arc<RefCell<State>>,
+	stage: Arc<RefCell<Stage>>,
 	prev_stage: &'a InstructionFetch,
 
 	reg_file: RefCell<[Register32; NUM_REGISTER]>,
@@ -43,9 +43,9 @@ pub struct Decode<'a> {
 }
 
 impl<'a> Decode<'a> {
-	pub fn new(state: Arc<RefCell<State>>, prev_stage: &'a InstructionFetch) -> Self {
+	pub fn new(stage: Arc<RefCell<Stage>>, prev_stage: &'a InstructionFetch) -> Self {
 		Self {
-			state: state.clone(),
+			stage: stage.clone(),
 			prev_stage,
 
 			reg_file: RefCell::new([Register32(0); NUM_REGISTER]),
@@ -87,6 +87,6 @@ impl<'a> PipelineStage for Decode<'a> {
     }
 
     fn should_stall(&self) -> bool {
-        !matches!(self.state.deref().borrow().to_owned(), State::DE)
+        !matches!(self.stage.deref().borrow().to_owned(), Stage::DE)
     }
 }

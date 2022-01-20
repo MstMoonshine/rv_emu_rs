@@ -2,7 +2,7 @@ pub mod instruction_fetch;
 pub mod decode;
 
 #[derive(Debug, Clone, Copy)]
-pub enum State {
+pub enum Stage {
 	IF,
 	DE,
 	EXE,
@@ -30,15 +30,15 @@ fn test() {
 	let bus = Arc::new(Bus::new(
 		&[0x00100093, 0x00200113, 0x002081b3])
 	);
-	let state = Arc::new(RefCell::new(State::IF));
+	let stage = Arc::new(RefCell::new(Stage::IF));
 
 	let stage_if = InstructionFetch::new(
 		bus.clone(), 
-		state.clone(),
+		stage.clone(),
 	);
 
 	let stage_de = Decode::new(
-		state.clone(),
+		stage.clone(),
 		&stage_if,
 	);
 
@@ -53,13 +53,13 @@ fn test() {
 		stage_de.latch_next();
 
 
-		let current_state = state.borrow().to_owned();
-		let next_state = match current_state {
-			State::IF => State::DE,
-			State::DE => State::IF,
-			_ => State::IF,
+		let current_stage = stage.borrow().to_owned();
+		let next_stage = match current_stage {
+			Stage::IF => Stage::DE,
+			Stage::DE => Stage::IF,
+			_ => Stage::IF,
 		};
 
-		state.replace(next_state);
+		stage.replace(next_stage);
 	}
 }

@@ -1,10 +1,10 @@
 use std::{sync::Arc, cell::RefCell, ops::Deref};
 use crate::{bus::Bus, register::Register32};
-use super::{PipelineStage, State};
+use super::{PipelineStage, Stage};
 
 pub struct InstructionFetch {
 	bus: Arc<Bus>,
-	state: Arc<RefCell<State>>,
+	stage: Arc<RefCell<Stage>>,
 
 	pc: RefCell<Register32>,
 	pc_ready: RefCell<Register32>,
@@ -14,10 +14,10 @@ pub struct InstructionFetch {
 }
 
 impl InstructionFetch {
-	pub fn new(bus: Arc<Bus>, state: Arc<RefCell<State>>) -> Self {
+	pub fn new(bus: Arc<Bus>, stage: Arc<RefCell<Stage>>) -> Self {
 		Self {
 			bus: bus.clone(),
-			state: state.clone(),
+			stage: stage.clone(),
 
 			pc: RefCell::new(Register32(bus.memory_layout.rom_start as u32)),		
 			pc_ready: RefCell::new(Register32(bus.memory_layout.rom_start as u32)),
@@ -50,7 +50,7 @@ impl PipelineStage for InstructionFetch {
     }
 
     fn should_stall(&self) -> bool {
-		!matches!(self.state.deref().borrow().to_owned(), State::DE)
+		!matches!(self.stage.deref().borrow().to_owned(), Stage::DE)
     }
 }
 
@@ -66,11 +66,11 @@ fn test() {
 	}
 
 	let bus = Bus::new(&[0x1122_3344_u32, 0xdead_beef, 1, 2, 3, 4, 5, 0xaabbccdd, 0x44332211]);
-	let state = Arc::new(RefCell::new(State::IF));
+	let stage = Arc::new(RefCell::new(Stage::IF));
 
 	let stage_if = InstructionFetch::new(
 		Arc::new(bus), 
-		state.clone(),
+		stage.clone(),
 	);
 	show_if(&stage_if);
 
