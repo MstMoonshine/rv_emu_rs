@@ -3,7 +3,7 @@ use super::mmio_device::MMIODevice;
 
 pub struct RAMDevice {
 	ram: RefCell<Vec<u32>>,
-	pub size: usize,
+	size: usize,
 }
 
 impl RAMDevice {
