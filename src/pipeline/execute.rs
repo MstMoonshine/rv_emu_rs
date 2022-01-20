@@ -12,7 +12,7 @@ enum ALUOperation {
     SLT = 0b010,
     XOR = 0b100,
     SRL = 0b101,
-    OR = 0b110,
+    OR  = 0b110,
     AND = 0b111,
 }
 

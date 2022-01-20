@@ -89,7 +89,19 @@ impl<'a> PipelineStage for Decode<'a> {
 
         val.is_alu_operation = val.opcode & 0b1011111 == 0b0010011;
         val.is_store         = val.opcode == 0b0100011;
-        val.imm32 = (val.imm11_0 << 21) as i32 >> 21;
+
+        let store_imm = ((((instruction >> 25) & 0x7f) << 5) 
+            | ((instruction >> 7) & 0x1f)) as i32;
+        let alu_imm = (val.imm11_0 << 21) as i32 >> 21;
+
+        val.imm32 = if val.is_store {
+            store_imm
+        } else if val.is_alu_operation {
+            alu_imm
+        } else {
+            println!("Error: not implemented!\n"); // add error handling logic
+            0_i32
+        };
     }
 
     fn latch_next(&self) {
