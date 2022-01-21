@@ -60,10 +60,10 @@ impl<'a> MemoryAccess<'a> {
 		prev_stage: &'a Execute,
 		bus: Arc<Bus>) -> Self {
 		Self {
-			stage: stage.clone(),
+			stage,
 			prev_stage,
 
-			bus: bus.clone(),
+			bus,
 
 			mem_val: RefCell::new(MemoryAccessValues::new()),
 			mem_val_ready: RefCell::new(MemoryAccessValues::new()),
@@ -87,18 +87,11 @@ impl<'a> PipelineStage for MemoryAccess<'a> {
 		mem_val.alu_result = exe_val.alu_result;
 
 		if mem_val.is_store {
-			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as usize;
-
-			match MemoryAccessWidth::try_from(mem_val.funct3) {
-				Ok(MemoryAccessWidth::Byte) => {
-					// access bus here
-					// self.bus.write(addr, mem_val.rs2, MemoryAccessWidth::Byte);
-				},
-				_ => {
-
-				},
-			};
-
+			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as usize; // this line should be done in the ALU
+			let width = MemoryAccessWidth::try_from(mem_val.funct3)
+			.expect("Invalid store width");
+			self.bus.write(addr, mem_val.rs2, width)
+			.expect("Memory store error");
 		}
     }
 

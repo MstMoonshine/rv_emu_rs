@@ -15,9 +15,9 @@ pub struct InstructionFetch {
 }
 
 impl InstructionFetch {
-    pub fn new(bus: Arc<Bus>, stage: Arc<RefCell<Stage>>) -> Self {
+    pub fn new(stage: Arc<RefCell<Stage>>, bus: Arc<Bus>) -> Self {
         Self {
-            stage: stage.clone(),
+            stage,
 
             bus: bus.clone(),
 
@@ -83,7 +83,7 @@ fn test() {
     ]);
     let stage = Arc::new(RefCell::new(Stage::IF));
 
-    let stage_if = InstructionFetch::new(Arc::new(bus), stage.clone());
+    let stage_if = InstructionFetch::new(stage.clone(), Arc::new(bus));
     show_if(&stage_if);
 
     for i in 0..21 {

@@ -52,7 +52,7 @@ pub struct Decode<'a> {
 impl<'a> Decode<'a> {
     pub fn new(stage: Arc<RefCell<Stage>>, prev_stage: &'a InstructionFetch) -> Self {
         Self {
-            stage: stage.clone(),
+            stage,
             prev_stage,
 
             reg_file: RefCell::new([Register32(0); NUM_REGISTER]),

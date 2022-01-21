@@ -58,7 +58,7 @@ pub struct Execute<'a> {
 impl<'a> Execute<'a> {
     pub fn new(stage: Arc<RefCell<Stage>>, prev_stage: &'a Decode) -> Self {
         Self {
-            stage: stage.clone(),
+            stage,
             prev_stage,
 
             exe_val: RefCell::new(ExecutionValues::new()),
