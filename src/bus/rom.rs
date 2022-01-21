@@ -16,15 +16,15 @@ impl ROMDevice {
 }
 
 impl MMIODevice for ROMDevice {
-    fn read(&self, offset: usize) -> u32 {
-        if offset < self.size {
-            self.rom.borrow()[offset]
+    fn read(&self, location: usize) -> u32 {
+        if location < self.size {
+            self.rom.borrow()[location]
         } else {
             0_u32
         }
     }
 
-    fn write(&self, _offset: usize, _val: u32) {}
+    fn write(&self, _location: usize, _val: u32) {}
 }
 
 #[cfg(test)]

@@ -2,7 +2,7 @@ use std::{cell::RefCell, sync::Arc};
 
 use num_enum::TryFromPrimitive;
 
-use crate::bus::{Bus, mmio_device::MMIODevice};
+use crate::bus::{Bus};
 
 use super::{Stage, execute::Execute, PipelineStage};
 
@@ -37,7 +37,7 @@ impl MemoryAccessValues {
 	}
 }
 
-#[derive(Debug, TryFromPrimitive)]
+#[derive(Debug, Clone, Copy, TryFromPrimitive)]
 #[repr(u32)]
 pub enum MemoryAccessWidth {
 	Byte		= 0b000,
@@ -87,12 +87,12 @@ impl<'a> PipelineStage for MemoryAccess<'a> {
 		mem_val.alu_result = exe_val.alu_result;
 
 		if mem_val.is_store {
-			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as u32;
+			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as usize;
 
 			match MemoryAccessWidth::try_from(mem_val.funct3) {
 				Ok(MemoryAccessWidth::Byte) => {
 					// access bus here
-					// bus.write(offset, val);
+					// self.bus.write(addr, mem_val.rs2, MemoryAccessWidth::Byte);
 				},
 				_ => {
 

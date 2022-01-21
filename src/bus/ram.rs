@@ -16,16 +16,16 @@ impl RAMDevice {
 }
 
 impl MMIODevice for RAMDevice {
-    fn read(&self, offset: usize) -> u32 {
-        if offset < self.size {
-            self.ram.borrow()[offset]
+    fn read(&self, location: usize) -> u32 {
+        if location < self.size {
+            self.ram.borrow()[location]
         } else {
             0_u32
         }
     }
 
-    fn write(&self, offset: usize, val: u32) {
-        self.ram.borrow_mut()[offset] = val;
+    fn write(&self, location: usize, val: u32) {
+        self.ram.borrow_mut()[location] = val;
     }
 }
 

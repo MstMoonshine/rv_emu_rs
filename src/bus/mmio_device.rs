@@ -1,4 +1,4 @@
 pub trait MMIODevice {
-    fn read(&self, offset: usize) -> u32;
-    fn write(&self, offset: usize, val: u32);
+    fn read(&self, location: usize) -> u32;
+    fn write(&self, location: usize, val: u32);
 }

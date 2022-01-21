@@ -5,7 +5,7 @@ use std::{cell::RefCell, sync::Arc};
 
 use super::{decode::Decode, PipelineStage, Stage};
 
-#[derive(Debug, TryFromPrimitive)]
+#[derive(Debug, Clone, Copy, TryFromPrimitive)]
 #[repr(u32)]
 enum ALUOperation {
     ADD = 0b000,

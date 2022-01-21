@@ -1,4 +1,4 @@
-use super::{PipelineStage, Stage};
+use super::{PipelineStage, Stage, memory_access::MemoryAccessWidth};
 use crate::{bus::Bus, register::Register32};
 use std::{cell::RefCell, sync::Arc};
 
@@ -39,7 +39,8 @@ impl PipelineStage for InstructionFetch {
         if self.should_stall() { return; }
 
         let addr = self.pc.borrow().0 as usize;
-        let ins = self.bus.read(addr).expect("Instruction Fetch Error");
+        let ins = self.bus.read(addr, MemoryAccessWidth::Word)
+        .expect("Instruction Fetch Error");
         self.instruction.replace(Register32(ins));
 
         self.pc.replace(Register32(addr as u32 + 4));
@@ -85,7 +86,7 @@ fn test() {
     let stage_if = InstructionFetch::new(Arc::new(bus), stage.clone());
     show_if(&stage_if);
 
-    for i in 0..5 {
+    for i in 0..21 {
         println!("------- {} -------", i);
 
         stage_if.compute();
