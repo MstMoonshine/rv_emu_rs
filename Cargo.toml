@@ -7,5 +7,8 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.dev]
+overflow-checks = false
+
 [dependencies]
 num_enum = "0.5.6"
