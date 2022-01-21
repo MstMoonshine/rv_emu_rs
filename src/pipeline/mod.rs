@@ -22,10 +22,9 @@ pub trait PipelineStage {
 #[test]
 fn test() {
     use std::{cell::RefCell, sync::Arc};
-
     use crate::{
         bus::Bus,
-        pipeline::{decode::Decode, execute::Execute, instruction_fetch::InstructionFetch},
+        pipeline::{decode::Decode, execute::Execute, instruction_fetch::InstructionFetch, memory_access::MemoryAccess}, register::{Register32, NUM_REGISTER},
     };
 
     fn show_de(stage_de: &Decode) {
@@ -37,40 +36,60 @@ fn test() {
     }
 
     let bus = Arc::new(Bus::new(&[
-        0x00100093,
-        0xfff00213,
-        0x00200113,
-        0x002081b3,
-        0x0010029b,
-        0x01f29293,
-        0x0032a023,
+        0x00100093, // addi x1, x0, 1
+        0xfff00213, // addi x4, x0, -1
+        0x00200113, // li x2, 2
+        0x002081b3, // add x3, x1, x2
+        0x0010029b, // li x5, 0x80000000
+        0x01f29293, // (cont.)
+        0x0032a023, // sw x3, 0(x5)
     ]));
+    let reg_file = Arc::new(RefCell::new(
+        [Register32(0); NUM_REGISTER]
+    ));
+
+    // for testing
+    reg_file.borrow_mut()[3] = Register32(0xdead_beef);
+    reg_file.borrow_mut()[5] = Register32(0x8000_0000);
+
     let stage = Arc::new(RefCell::new(Stage::IF));
 
-    let stage_if = InstructionFetch::new(bus.clone(), stage.clone());
-    let stage_de = Decode::new(stage.clone(), &stage_if);
+    let stage_if = InstructionFetch::new(stage.clone(), bus.clone());
+    let stage_de = Decode::new(stage.clone(), &stage_if, reg_file.clone());
     let stage_exe = Execute::new(stage.clone(), &stage_de);
+    let stage_mem = MemoryAccess::new(stage.clone(), &stage_exe, bus.clone());
 
-    for _ in 0..22 {
+    for _ in 0..(bus.memory_layout.rom_size * 4 + 4) {
         stage_if.compute();
         stage_de.compute();
         stage_exe.compute();
+        stage_mem.compute();
 
-        show_de(&stage_de);
-        show_exe(&stage_exe);
+        // show_de(&stage_de);
+        // show_exe(&stage_exe);
 
         stage_if.latch_next();
         stage_de.latch_next();
         stage_exe.latch_next();
+        stage_mem.latch_next();
 
         let current_stage = stage.borrow().to_owned();
         let next_stage = match current_stage {
             Stage::IF => Stage::DE,
             Stage::DE => Stage::EXE,
-            Stage::EXE => Stage::IF,
+            Stage::EXE => Stage::MEM,
+            Stage::MEM => Stage::IF,
             _ => Stage::IF,
         };
 
         stage.replace(next_stage);
     }
+
+    let addr = 0x8000_0000 as usize;
+
+    println!("{:#010x}: {:#010x}", 
+        addr,
+        bus.read(addr, memory_access::MemoryAccessWidth::Word)
+        .expect("error")
+    );
 }

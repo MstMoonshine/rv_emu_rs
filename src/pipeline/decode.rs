@@ -1,5 +1,5 @@
 use super::{instruction_fetch::InstructionFetch, PipelineStage, Stage};
-use crate::register::{Register32, NUM_REGISTER};
+use crate::register::RegFile;
 use std::{cell::RefCell, sync::Arc};
 
 #[derive(Debug, Clone)]
@@ -43,19 +43,21 @@ pub struct Decode<'a> {
     stage: Arc<RefCell<Stage>>,
     prev_stage: &'a InstructionFetch,
 
-    reg_file: RefCell<[Register32; NUM_REGISTER]>,
+    reg_file: Arc<RegFile>,
 
     de_val: RefCell<DecodedValues>,
     de_val_ready: RefCell<DecodedValues>,
 }
 
 impl<'a> Decode<'a> {
-    pub fn new(stage: Arc<RefCell<Stage>>, prev_stage: &'a InstructionFetch) -> Self {
+    pub fn new(stage: Arc<RefCell<Stage>>,
+        prev_stage: &'a InstructionFetch,
+        reg_file: Arc<RegFile>) -> Self {
         Self {
             stage,
             prev_stage,
 
-            reg_file: RefCell::new([Register32(0); NUM_REGISTER]),
+            reg_file,
 
             de_val: RefCell::new(DecodedValues::new()),
             de_val_ready: RefCell::new(DecodedValues::new()),

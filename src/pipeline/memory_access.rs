@@ -87,11 +87,14 @@ impl<'a> PipelineStage for MemoryAccess<'a> {
 		mem_val.alu_result = exe_val.alu_result;
 
 		if mem_val.is_store {
-			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as usize; // this line should be done in the ALU
+			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as u32 as usize; // this line should be done in the ALU
 			let width = MemoryAccessWidth::try_from(mem_val.funct3)
 			.expect("Invalid store width");
 			self.bus.write(addr, mem_val.rs2, width)
 			.expect("Memory store error");
+
+
+			println!("rs2 = {:#010x}, written to {:#010x}", mem_val.rs2, addr);
 		}
     }
 
