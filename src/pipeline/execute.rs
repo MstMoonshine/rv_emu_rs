@@ -1,5 +1,6 @@
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
+use std::ops::Deref;
 use std::{cell::RefCell, sync::Arc};
 
 use super::{decode::Decode, PipelineStage, Stage};
@@ -16,12 +17,42 @@ enum ALUOperation {
     AND = 0b111,
 }
 
+
+#[derive(Debug, Clone, Copy)]
+pub struct ExecutionValues {
+    pub rd:             u32,
+    pub funt3:          u32,
+    pub rs1:            u32,
+    pub rs2:            u32,
+    pub imm32:          i32,
+
+    pub alu_result:     u32,
+    pub is_alu_operation: bool,
+    pub is_store: bool,
+}
+
+impl ExecutionValues {
+    pub fn new() -> Self {
+        Self {
+            rd:                 0,
+            funt3:              0,
+            rs1:                0,
+            rs2:                0,
+            imm32:              0,
+
+            alu_result:         0,
+            is_alu_operation:   false,
+            is_store:           false, 
+        }
+    }
+}
+
 pub struct Execute<'a> {
     stage: Arc<RefCell<Stage>>,
     prev_stage: &'a Decode<'a>,
 
-    alu_result: RefCell<u32>,
-    alu_result_ready: RefCell<u32>,
+    exe_val: RefCell<ExecutionValues>,
+    exe_val_ready: RefCell<ExecutionValues>
 }
 
 impl<'a> Execute<'a> {
@@ -30,13 +61,13 @@ impl<'a> Execute<'a> {
             stage: stage.clone(),
             prev_stage,
 
-            alu_result: RefCell::new(0_u32),
-            alu_result_ready: RefCell::new(0_u32),
+            exe_val: RefCell::new(ExecutionValues::new()),
+            exe_val_ready: RefCell::new(ExecutionValues::new()),
         }
     }
 
-    pub fn get_alu_result_out(&self) -> u32 {
-        *self.alu_result_ready.borrow()
+    pub fn get_execution_values_out(&self) -> ExecutionValues {
+        self.exe_val_ready.borrow().to_owned()
     }
 }
 
@@ -45,6 +76,15 @@ impl<'a> PipelineStage for Execute<'a> {
         if self.should_stall() { return; }
 
         let de_val = self.prev_stage.get_decoded_values_out();
+        let mut exe_val = self.exe_val.borrow_mut();
+
+        exe_val.rd = de_val.rd;
+        exe_val.funt3 = de_val.funt3;
+        exe_val.rs1 = de_val.rs1;
+        exe_val.rs2 = de_val.rs2;
+        exe_val.imm32 = de_val.imm32;
+        exe_val.is_alu_operation = de_val.is_alu_operation;
+        exe_val.is_store = de_val.is_store;
 
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
@@ -57,21 +97,21 @@ impl<'a> PipelineStage for Execute<'a> {
                     } else {
                         de_val.rs1 + de_val.rs2
                     };
-                    self.alu_result.replace(result);
+                    exe_val.alu_result = result;
                 } else {
                     let result = (de_val.rs1 as i32 + de_val.imm32) as u32;
-                    self.alu_result.replace(result);
+                    exe_val.alu_result = result;
                 }
             }
 
             _ => {
-                println!("Unimplemented! func3 = {:#050b}", de_val.funt3);
+                println!("Unimplemented! func3 = {:#05b}", de_val.funt3);
             }
         }
     }
 
     fn latch_next(&self) {
-        self.alu_result_ready.replace(*self.alu_result.borrow());
+        self.exe_val_ready.replace(self.exe_val.borrow().to_owned());
     }
 
     fn should_stall(&self) -> bool {
