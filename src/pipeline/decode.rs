@@ -16,6 +16,7 @@ pub struct DecodedValues {
 
     pub is_alu_operation: bool,
     pub is_store: bool,
+    pub is_load: bool,
     pub imm32: i32,
 }
 
@@ -33,7 +34,8 @@ impl DecodedValues {
             shamt:          0,
 
             is_alu_operation: false,
-            is_store: false,
+            is_store:   false,
+            is_load:    false,
             imm32: 0,
         }
     }
@@ -89,17 +91,18 @@ impl<'a> PipelineStage for Decode<'a> {
         val.rs1 = if rs1_addr == 0 { 0 } else { self.reg_file.borrow()[rs1_addr].0 };
         val.rs2 = if rs2_addr == 0 { 0 } else { self.reg_file.borrow()[rs2_addr].0 };
 
-        val.is_alu_operation = val.opcode & 0b1011111 == 0b0010011;
-        val.is_store         = val.opcode == 0b0100011;
+        val.is_alu_operation = val.opcode & 0b101_1111 == 0b001_0011;
+        val.is_store         = val.opcode == 0b010_0011;
+        val.is_load          = val.opcode == 0b000_0011;
 
-        let store_imm = ((((instruction >> 25) & 0x7f) << 5) 
+        let s_imm = ((((instruction >> 25) & 0x7f) << 5) 
             | ((instruction >> 7) & 0x1f)) as i32;
-        let alu_imm = (val.imm11_0 << 21) as i32 >> 21;
+        let i_imm = (val.imm11_0 << 21) as i32 >> 21;
 
         val.imm32 = if val.is_store {
-            store_imm
-        } else if val.is_alu_operation {
-            alu_imm
+            s_imm
+        } else if val.is_alu_operation || val.is_load {
+            i_imm
         } else {
             println!("Error: not implemented! opcode = {}\n", &val.opcode); // add error handling logic
             0_i32

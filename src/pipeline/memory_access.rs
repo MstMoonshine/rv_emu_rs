@@ -15,9 +15,10 @@ pub struct MemoryAccessValues {
 
 	is_alu_operation: 	bool,
 	is_store: 			bool,
+	is_load: 			bool,
 
-	imm32: 		i32,
-	alu_result: u32,
+	imm32: i32,
+	write_back_value: u32,
 }
 
 impl MemoryAccessValues {
@@ -30,9 +31,10 @@ impl MemoryAccessValues {
 
 			is_alu_operation:	false,
 			is_store:			false,
+			is_load:			false,
 
-			imm32: 			0_i32,
-			alu_result: 	0,
+			imm32: 0_i32,
+			write_back_value: 0,
 		}
 	}
 }
@@ -40,9 +42,9 @@ impl MemoryAccessValues {
 #[derive(Debug, Clone, Copy, TryFromPrimitive)]
 #[repr(u32)]
 pub enum MemoryAccessWidth {
-	Byte		= 0b000,
-	HalfWord	= 0b001,
-	Word		= 0b010,
+	Byte		= 0b00,
+	HalfWord	= 0b01,
+	Word		= 0b10,
 }
 
 pub struct MemoryAccess<'a> {
@@ -69,6 +71,10 @@ impl<'a> MemoryAccess<'a> {
 			mem_val_ready: RefCell::new(MemoryAccessValues::new()),
 		}
 	}
+
+	pub fn get_memory_access_values_out(&self) -> MemoryAccessValues {
+		self.mem_val_ready.borrow().to_owned()
+	}
 }
 
 impl<'a> PipelineStage for MemoryAccess<'a> {
@@ -83,18 +89,42 @@ impl<'a> PipelineStage for MemoryAccess<'a> {
 		mem_val.rs2 = exe_val.rs2;
 		mem_val.is_alu_operation = exe_val.is_alu_operation;
 		mem_val.is_store = exe_val.is_store;
+		mem_val.is_load = exe_val.is_load;
 		mem_val.imm32 = exe_val.imm32;
-		mem_val.alu_result = exe_val.alu_result;
+		mem_val.write_back_value = exe_val.alu_result;
+
+		// this line should be done in the ALU
+		let addr = (mem_val.rs1 as i32 + mem_val.imm32) as u32 as usize;
 
 		if mem_val.is_store {
-			let addr = (mem_val.rs1 as i32 + mem_val.imm32) as u32 as usize; // this line should be done in the ALU
-			let width = MemoryAccessWidth::try_from(mem_val.funct3)
+			let width = MemoryAccessWidth::try_from(mem_val.funct3 & 0b11)
 			.expect("Invalid store width");
 			self.bus.write(addr, mem_val.rs2, width)
 			.expect("Memory store error");
 
 
 			println!("rs2 = {:#010x}, written to {:#010x}", mem_val.rs2, addr);
+		} else if mem_val.is_load {
+			let signed_extend = mem_val.funct3 & 0b100 == 0;
+
+			let width = MemoryAccessWidth::try_from(mem_val.funct3 & 0b11)
+			.expect("Invalid load width");
+			let val = self.bus.read(addr, width)
+			.expect("Memory load error");
+
+			mem_val.write_back_value = if signed_extend {
+				match width {
+					MemoryAccessWidth::Byte => {
+						val as i8 as i32 as u32
+					},
+					MemoryAccessWidth::HalfWord => {
+						val as i16 as i32 as u32
+					},
+					_ => val
+				}
+			} else {
+				val
+			};
 		}
     }
 
