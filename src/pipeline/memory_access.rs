@@ -8,17 +8,17 @@ use super::{Stage, execute::Execute, PipelineStage};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MemoryAccessValues {
-	rd:		u32,
-	rs1: 	u32,
-	rs2: 	u32,
-	funct3:	u32,
+	pub	rd:		u32,
+	pub	rs1: 	u32,
+	pub	rs2: 	u32,
+	pub	funct3:	u32,
 
-	is_alu_operation: 	bool,
-	is_store: 			bool,
-	is_load: 			bool,
-
-	imm32: i32,
-	write_back_value: u32,
+	pub	is_alu_operation: 	bool,
+	pub	is_store: 			bool,
+	pub	is_load: 			bool,
+	
+	pub	imm32: i32,
+	pub	write_back_value: u32,
 }
 
 impl MemoryAccessValues {
@@ -101,9 +101,6 @@ impl<'a> PipelineStage for MemoryAccess<'a> {
 			.expect("Invalid store width");
 			self.bus.write(addr, mem_val.rs2, width)
 			.expect("Memory store error");
-
-
-			println!("rs2 = {:#010x}, written to {:#010x}", mem_val.rs2, addr);
 		} else if mem_val.is_load {
 			let signed_extend = mem_val.funct3 & 0b100 == 0;
 

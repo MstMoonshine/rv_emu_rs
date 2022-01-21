@@ -104,7 +104,8 @@ impl<'a> PipelineStage for Decode<'a> {
         } else if val.is_alu_operation || val.is_load {
             i_imm
         } else {
-            println!("Error: not implemented! opcode = {}\n", &val.opcode); // add error handling logic
+            println!("Error: not implemented! opcode = {:#09b}, instruction = {:#010x}\n",
+                &val.opcode, &val.instruction); // should add error handling logic
             0_i32
         };
     }

@@ -25,7 +25,7 @@ fn test() {
     use std::{cell::RefCell, sync::Arc};
     use crate::{
         bus::Bus,
-        pipeline::{decode::Decode, execute::Execute, instruction_fetch::InstructionFetch, memory_access::MemoryAccess}, register::{Register32, NUM_REGISTER},
+        pipeline::{decode::Decode, execute::Execute, instruction_fetch::InstructionFetch, memory_access::MemoryAccess, write_back::WriteBack}, register::{Register32, NUM_REGISTER},
     };
 
     fn show_de(stage_de: &Decode) {
@@ -41,8 +41,6 @@ fn test() {
         0xfff00213, // addi x4, x0, -1
         0x00200113, // li x2, 2
         0x002081b3, // add x3, x1, x2
-        0x0010029b, // li x5, 0x80000000
-        0x01f29293, // (cont.)
         0x0032a023, // sw x3, 0(x5)
     ]));
     let reg_file = Arc::new(RefCell::new(
@@ -50,7 +48,7 @@ fn test() {
     ));
 
     // for testing
-    reg_file.borrow_mut()[3] = Register32(0xdead_beef);
+    // reg_file.borrow_mut()[3] = Register32(0xdead_beef);
     reg_file.borrow_mut()[5] = Register32(0x8000_0000);
 
     let stage = Arc::new(RefCell::new(Stage::IF));
@@ -59,12 +57,14 @@ fn test() {
     let stage_de = Decode::new(stage.clone(), &stage_if, reg_file.clone());
     let stage_exe = Execute::new(stage.clone(), &stage_de);
     let stage_mem = MemoryAccess::new(stage.clone(), &stage_exe, bus.clone());
+    let stage_wb = WriteBack::new(stage.clone(), &stage_mem, reg_file.clone());
 
-    for _ in 0..(bus.memory_layout.rom_size * 4 + 4) {
+    for _ in 0..((bus.memory_layout.rom_size / 4 + 1) * 5) {
         stage_if.compute();
         stage_de.compute();
         stage_exe.compute();
         stage_mem.compute();
+        stage_wb.compute();
 
         // show_de(&stage_de);
         // show_exe(&stage_exe);
@@ -73,14 +73,15 @@ fn test() {
         stage_de.latch_next();
         stage_exe.latch_next();
         stage_mem.latch_next();
+        stage_wb.latch_next();
 
         let current_stage = stage.borrow().to_owned();
         let next_stage = match current_stage {
             Stage::IF => Stage::DE,
             Stage::DE => Stage::EXE,
             Stage::EXE => Stage::MEM,
-            Stage::MEM => Stage::IF,
-            _ => Stage::IF,
+            Stage::MEM => Stage::WB,
+            Stage::WB => Stage::IF,
         };
 
         stage.replace(next_stage);
@@ -93,4 +94,5 @@ fn test() {
         bus.read(addr, memory_access::MemoryAccessWidth::Word)
         .expect("error")
     );
+    println!("{:?}", reg_file);
 }

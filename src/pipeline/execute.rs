@@ -1,6 +1,5 @@
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
-use std::ops::Deref;
 use std::{cell::RefCell, sync::Arc};
 
 use super::{decode::Decode, PipelineStage, Stage};
