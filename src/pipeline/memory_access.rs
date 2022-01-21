@@ -93,6 +93,8 @@ impl PipelineStage for MemoryAccess {
 		mem_val.imm32 = exe_val.imm32;
 		mem_val.write_back_value = exe_val.alu_result;
 
+		let is_load_i = exe_val.is_load_i;
+
 		// this line should be done in the ALU
 		let addr = (mem_val.rs1 as i32 + mem_val.imm32) as u32 as usize;
 
@@ -109,7 +111,9 @@ impl PipelineStage for MemoryAccess {
 			let val = self.bus.read(addr, width)
 			.expect("Memory load error");
 
-			mem_val.write_back_value = if signed_extend {
+			mem_val.write_back_value = if is_load_i {
+				mem_val.imm32 as u32
+			} else if signed_extend {
 				match width {
 					MemoryAccessWidth::Byte => {
 						val as i8 as i32 as u32
@@ -123,7 +127,7 @@ impl PipelineStage for MemoryAccess {
 				val
 			};
 		}
-    }
+	}
 
     fn latch_next(&self) {
 		self.mem_val_ready.replace(self.mem_val.borrow().to_owned());

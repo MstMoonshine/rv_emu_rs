@@ -29,6 +29,7 @@ pub struct ExecutionValues {
     pub is_alu_operation: bool,
     pub is_store:   bool,
     pub is_load:    bool,
+    pub is_load_i:  bool,
 }
 
 impl ExecutionValues {
@@ -44,6 +45,7 @@ impl ExecutionValues {
             is_alu_operation:   false,
             is_store:           false, 
             is_load:            false, 
+            is_load_i:          false, 
         }
     }
 }
@@ -83,9 +85,11 @@ impl PipelineStage for Execute {
         exe_val.funct3 = de_val.funct3;
         exe_val.rs1 = de_val.rs1;
         exe_val.rs2 = de_val.rs2;
+        exe_val.imm32 = de_val.imm32;
         exe_val.is_alu_operation = de_val.is_alu_operation;
         exe_val.is_store = de_val.is_store;
         exe_val.is_load = de_val.is_load;
+        exe_val.is_load_i = de_val.is_load_i;
 
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
