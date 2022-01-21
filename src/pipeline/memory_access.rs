@@ -87,6 +87,7 @@ impl PipelineStage for MemoryAccess {
 		mem_val.rd = exe_val.rd;
 		mem_val.rs1 = exe_val.rs1;
 		mem_val.rs2 = exe_val.rs2;
+		mem_val.funct3 = exe_val.funct3;
 		mem_val.is_alu_operation = exe_val.is_alu_operation;
 		mem_val.is_store = exe_val.is_store;
 		mem_val.is_load = exe_val.is_load;
