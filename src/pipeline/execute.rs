@@ -21,7 +21,7 @@ enum ALUOperation {
 #[derive(Debug, Clone, Copy)]
 pub struct ExecutionValues {
     pub rd:             u32,
-    pub funt3:          u32,
+    pub funct3:          u32,
     pub rs1:            u32,
     pub rs2:            u32,
     pub imm32:          i32,
@@ -35,7 +35,7 @@ impl ExecutionValues {
     pub fn new() -> Self {
         Self {
             rd:                 0,
-            funt3:              0,
+            funct3:              0,
             rs1:                0,
             rs2:                0,
             imm32:              0,
@@ -79,7 +79,7 @@ impl<'a> PipelineStage for Execute<'a> {
         let mut exe_val = self.exe_val.borrow_mut();
 
         exe_val.rd = de_val.rd;
-        exe_val.funt3 = de_val.funt3;
+        exe_val.funct3 = de_val.funct3;
         exe_val.rs1 = de_val.rs1;
         exe_val.rs2 = de_val.rs2;
         exe_val.imm32 = de_val.imm32;
@@ -89,7 +89,7 @@ impl<'a> PipelineStage for Execute<'a> {
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
 
-        match ALUOperation::try_from(de_val.funt3) {
+        match ALUOperation::try_from(de_val.funct3) {
             Ok(ALUOperation::ADD) => {
                 if is_register_op {
                     let result = if is_alternate {
@@ -105,7 +105,7 @@ impl<'a> PipelineStage for Execute<'a> {
             }
 
             _ => {
-                println!("Unimplemented! func3 = {:#05b}", de_val.funt3);
+                println!("Unimplemented! funct3 = {:#05b}", de_val.funct3);
             }
         }
     }

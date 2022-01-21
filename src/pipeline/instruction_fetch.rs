@@ -3,8 +3,9 @@ use crate::{bus::Bus, register::Register32};
 use std::{cell::RefCell, sync::Arc};
 
 pub struct InstructionFetch {
-    bus: Arc<Bus>,
     stage: Arc<RefCell<Stage>>,
+
+    bus: Arc<Bus>,
 
     pc: RefCell<Register32>,
     pc_ready: RefCell<Register32>,
@@ -16,8 +17,9 @@ pub struct InstructionFetch {
 impl InstructionFetch {
     pub fn new(bus: Arc<Bus>, stage: Arc<RefCell<Stage>>) -> Self {
         Self {
-            bus: bus.clone(),
             stage: stage.clone(),
+
+            bus: bus.clone(),
 
             pc: RefCell::new(Register32(bus.memory_layout.rom_start as u32)),
             pc_ready: RefCell::new(Register32(bus.memory_layout.rom_start as u32)),

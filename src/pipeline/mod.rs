@@ -1,6 +1,7 @@
+pub mod instruction_fetch;
 pub mod decode;
 pub mod execute;
-pub mod instruction_fetch;
+pub mod memory_access;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Stage {
