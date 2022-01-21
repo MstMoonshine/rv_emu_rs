@@ -11,6 +11,7 @@ const ADDR_ALIGN: usize = 4;
 const ROM_START: usize = 0x4000_0000;
 const RAM_START: usize = 0x8000_0000;
 
+const _ROM_SIZE: usize = 0x4000_0000;
 const RAM_SIZE: usize = 0x4000_0000;
 
 pub struct MemoryLayout {
@@ -142,6 +143,10 @@ impl Bus {
         self.write_chunk(addr, write_val);
 
         Ok(())
+    }
+
+    pub fn mem_dump(&self, size: usize) {
+        self.ram.mem_dump(size);
     }
 }
 

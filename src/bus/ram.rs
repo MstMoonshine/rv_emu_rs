@@ -1,3 +1,5 @@
+use crate::bus::RAM_START;
+
 use super::mmio_device::MMIODevice;
 use std::cell::RefCell;
 
@@ -11,6 +13,17 @@ impl RAMDevice {
         Self {
             ram: RefCell::new(vec![0_u32; size]),
             size,
+        }
+    }
+
+    pub fn mem_dump(&self, size: usize) {
+        let dump_region = &self.ram.borrow().clone()[..size / 4];
+
+        for (i, val) in dump_region.into_iter().enumerate() {
+            println!("{:#010x}: {:#010x}",
+                RAM_START + &i * 4,
+                val,
+            )
         }
     }
 }

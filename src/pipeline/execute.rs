@@ -35,7 +35,7 @@ impl ExecutionValues {
     pub fn new() -> Self {
         Self {
             rd:                 0,
-            funct3:              0,
+            funct3:             0,
             rs1:                0,
             rs2:                0,
             imm32:              0,
@@ -48,16 +48,16 @@ impl ExecutionValues {
     }
 }
 
-pub struct Execute<'a> {
+pub struct Execute {
     stage: Arc<RefCell<Stage>>,
-    prev_stage: &'a Decode<'a>,
+    prev_stage: Arc<Decode>,
 
     exe_val: RefCell<ExecutionValues>,
     exe_val_ready: RefCell<ExecutionValues>
 }
 
-impl<'a> Execute<'a> {
-    pub fn new(stage: Arc<RefCell<Stage>>, prev_stage: &'a Decode) -> Self {
+impl Execute {
+    pub fn new(stage: Arc<RefCell<Stage>>, prev_stage: Arc<Decode>) -> Self {
         Self {
             stage,
             prev_stage,
@@ -72,7 +72,7 @@ impl<'a> Execute<'a> {
     }
 }
 
-impl<'a> PipelineStage for Execute<'a> {
+impl PipelineStage for Execute {
     fn compute(&self) {
         if self.should_stall() { return; }
 
@@ -83,7 +83,6 @@ impl<'a> PipelineStage for Execute<'a> {
         exe_val.funct3 = de_val.funct3;
         exe_val.rs1 = de_val.rs1;
         exe_val.rs2 = de_val.rs2;
-        exe_val.imm32 = de_val.imm32;
         exe_val.is_alu_operation = de_val.is_alu_operation;
         exe_val.is_store = de_val.is_store;
         exe_val.is_load = de_val.is_load;
@@ -107,7 +106,9 @@ impl<'a> PipelineStage for Execute<'a> {
             }
 
             _ => {
-                println!("Unimplemented! funct3 = {:#05b}", de_val.funct3);
+                // println!("Unimplemented! funct3 = {:#05b}, instruction = {:#010x}",
+                //     de_val.funct3,
+                //     de_val.instruction);
             }
         }
     }

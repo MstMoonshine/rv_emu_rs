@@ -1,5 +1,20 @@
 use super::{mmio_device::MMIODevice, ADDR_ALIGN};
-use std::cell::RefCell;
+use std::{cell::RefCell, fmt};
+
+#[derive(Debug)]
+pub enum ROMError {
+    _LoadError,
+}
+impl std::error::Error for ROMError {}
+
+impl fmt::Display for ROMError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ROMError::_LoadError => write!(f, "ROM Load Error"),
+        }
+    }
+}
+
 
 pub struct ROMDevice {
     rom: RefCell<Vec<u32>>,
@@ -11,6 +26,15 @@ impl ROMDevice {
         Self {
             rom: RefCell::new(Vec::from(file)),
             size: file.len() * ADDR_ALIGN,
+        }
+    }
+
+    pub fn _load(&self, file: &[u32]) -> Result<(), ROMError> {
+        if file.len() * 4 > self.size {
+            Err(ROMError::_LoadError)
+        } else {
+            self.rom.replace(Vec::from(file));
+            Ok(())
         }
     }
 }

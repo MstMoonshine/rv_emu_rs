@@ -47,9 +47,9 @@ pub enum MemoryAccessWidth {
 	Word		= 0b10,
 }
 
-pub struct MemoryAccess<'a> {
+pub struct MemoryAccess {
 	stage: Arc<RefCell<Stage>>,
-	prev_stage: &'a Execute<'a>,
+	prev_stage: Arc<Execute>,
 
 	bus: Arc<Bus>,
 
@@ -57,9 +57,9 @@ pub struct MemoryAccess<'a> {
 	mem_val_ready: RefCell<MemoryAccessValues>,
 }
 
-impl<'a> MemoryAccess<'a> {
+impl MemoryAccess {
 	pub fn new(stage: Arc<RefCell<Stage>>,
-		prev_stage: &'a Execute,
+		prev_stage: Arc<Execute>,
 		bus: Arc<Bus>) -> Self {
 		Self {
 			stage,
@@ -77,7 +77,7 @@ impl<'a> MemoryAccess<'a> {
 	}
 }
 
-impl<'a> PipelineStage for MemoryAccess<'a> {
+impl PipelineStage for MemoryAccess {
     fn compute(&self) {
 		if self.should_stall() { return; }
 		

@@ -4,16 +4,16 @@ use crate::register::RegFile;
 
 use super::{Stage, memory_access::MemoryAccess, PipelineStage};
 
-pub struct WriteBack<'a> {
+pub struct WriteBack {
 	stage: Arc<RefCell<Stage>>,
-    prev_stage: &'a MemoryAccess<'a>,
+    prev_stage: Arc<MemoryAccess>,
 
 	reg_file: Arc<RegFile>,
 }
 
-impl<'a> WriteBack<'a> {
+impl WriteBack {
 	pub fn new(stage: Arc<RefCell<Stage>>,
-		prev_stage: &'a MemoryAccess<'a>,
+		prev_stage: Arc<MemoryAccess>,
 		reg_file: Arc<RegFile>) -> Self {
 		Self {
 			stage,
@@ -24,7 +24,7 @@ impl<'a> WriteBack<'a> {
 	}
 }
 
-impl<'a> PipelineStage for WriteBack<'a> {
+impl PipelineStage for WriteBack {
     fn compute(&self) {
 		if self.should_stall() { return; }
 
