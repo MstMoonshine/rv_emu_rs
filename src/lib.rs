@@ -1,19 +1,26 @@
-use register::{Register32, NUM_REGISTER};
+extern crate wasm_bindgen;
+
+use wasm_bindgen::prelude::*;
+
+extern crate web_sys;
+
+// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
+// -----
+
 use rv_system::RV32System;
+use crate::register::{Register32, NUM_REGISTER};
 use bus::RAM_START;
 
 mod bus;
 mod pipeline;
 mod register;
 mod rv_system;
-
-
-// 0x00100093, // addi x1, x0, 1
-// 0xfff00213, // addi x4, x0, -1
-// 0x00200113, // li x2, 2
-// 0x002081b3, // add x3, x1, x2
-// 0x800002b7, // li x5, 0x80000000 (lui	t0,0x80000)
-// 0x0032a023, // sw x3, 0(x5)
 
 fn run() -> ([Register32; NUM_REGISTER], Vec<u32>) {
     let file = &[
@@ -37,7 +44,8 @@ fn run() -> ([Register32; NUM_REGISTER], Vec<u32>) {
     (rv32_sys.get_reg(), rv32_sys.get_mem(0x20))
 }
 
-fn main() {
+#[wasm_bindgen]
+pub fn emulate() {
     let (reg, mem) = run();
 
     let mut output = String::new();
@@ -58,5 +66,5 @@ fn main() {
         )
     }
 
-    println!("{}", output);
+    log!("{}", output);
 }

@@ -81,6 +81,14 @@ impl RV32System {
 		self.bus.mem_dump(size);
 	}
 
+	pub fn get_mem(&self, size: usize) -> Vec<u32> {
+        self.bus.get_mem(size)
+    }
+
+	pub fn get_reg(&self) -> [Register32; NUM_REGISTER] {
+		self.reg_file.borrow().to_owned()
+	}
+
 	fn compute(&self) {
 		self.stage_if.compute();
 		self.stage_de.compute();

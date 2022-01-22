@@ -16,6 +16,10 @@ impl RAMDevice {
         }
     }
 
+    pub fn get_mem(&self, size: usize) -> Vec<u32> {
+        self.ram.borrow()[..size / 4].to_owned()
+    }
+
     pub fn mem_dump(&self, size: usize) {
         let dump_region = &self.ram.borrow().clone()[..size / 4];
 
