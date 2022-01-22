@@ -94,27 +94,35 @@ impl PipelineStage for Execute {
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
 
-        match ALUOperation::try_from(de_val.funct3) {
+        exe_val.alu_result = match ALUOperation::try_from(de_val.funct3) {
             Ok(ALUOperation::ADD) => {
                 if is_register_op {
-                    let result = if is_alternate {
+                    if is_alternate {
                         de_val.rs1 - de_val.rs2
                     } else {
                         de_val.rs1 + de_val.rs2
-                    };
-                    exe_val.alu_result = result;
+                    }
                 } else {
-                    let result = (de_val.rs1 as i32 + de_val.imm32) as u32;
-                    exe_val.alu_result = result;
+                    (de_val.rs1 as i32 + de_val.imm32) as u32
                 }
-            }
+            },
+
+            Ok(ALUOperation::SLL) => de_val.rs1 << (de_val.rs2 & 0x1F),
+            Ok(ALUOperation::SRL) => de_val.rs1 >> (de_val.rs2 & 0x1F),
+
+            Ok(ALUOperation::SLT) => if de_val.rs1 < de_val.rs2 { 1_u32 } else { 0_u32 },
+
+            Ok(ALUOperation::AND) => de_val.rs1 & de_val.rs2,
+            Ok(ALUOperation::OR) => de_val.rs1 | de_val.rs2,
+            Ok(ALUOperation::XOR) => de_val.rs1 ^ de_val.rs2,
 
             _ => {
                 // println!("Unimplemented! funct3 = {:#05b}, instruction = {:#010x}",
                 //     de_val.funct3,
                 //     de_val.instruction);
+                0_u32
             }
-        }
+        };
     }
 
     fn latch_next(&self) {
