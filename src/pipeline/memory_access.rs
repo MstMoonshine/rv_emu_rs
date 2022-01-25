@@ -16,6 +16,7 @@ pub struct MemoryAccessValues {
 	pub	is_alu_operation: 	bool,
 	pub	is_store: 			bool,
 	pub	is_load: 			bool,
+	pub	is_load_i: 			bool,
 	
 	pub	imm32: i32,
 	pub	write_back_value: u32,
@@ -32,6 +33,7 @@ impl MemoryAccessValues {
 			is_alu_operation:	false,
 			is_store:			false,
 			is_load:			false,
+			is_load_i:			false,
 
 			imm32: 0_i32,
 			write_back_value: 0,
@@ -91,10 +93,9 @@ impl PipelineStage for MemoryAccess {
 		mem_val.is_alu_operation = exe_val.is_alu_operation;
 		mem_val.is_store = exe_val.is_store;
 		mem_val.is_load = exe_val.is_load;
+		mem_val.is_load_i = exe_val.is_load_i;
 		mem_val.imm32 = exe_val.imm32;
 		mem_val.write_back_value = exe_val.alu_result;
-
-		let is_load_i = exe_val.is_load_i;
 
 		// this line should be done in the ALU
 		let addr = (mem_val.rs1 as i32 + mem_val.imm32) as u32 as usize;
@@ -104,15 +105,14 @@ impl PipelineStage for MemoryAccess {
 			.expect("Invalid store width");
 			self.bus.write(addr, mem_val.rs2, width)
 			.expect("Memory store error");
-		} else if mem_val.is_load {
+		} else if mem_val.is_load || mem_val.is_load_i {
 			let signed_extend = mem_val.funct3 & 0b100 == 0;
-
 			let width = MemoryAccessWidth::try_from(mem_val.funct3 & 0b11)
 			.expect("Invalid load width");
 			let val = self.bus.read(addr, width)
 			.expect("Memory load error");
 
-			mem_val.write_back_value = if is_load_i {
+			mem_val.write_back_value = if mem_val.is_load_i {
 				mem_val.imm32 as u32
 			} else if signed_extend {
 				match width {

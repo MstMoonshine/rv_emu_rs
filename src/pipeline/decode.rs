@@ -96,7 +96,7 @@ impl PipelineStage for Decode {
         val.is_alu_operation = val.opcode & 0b101_1111 == 0b001_0011;
         val.is_store         = val.opcode == 0b010_0011;
         val.is_load_i        = val.opcode == 0b011_0111;
-        val.is_load          = (val.opcode == 0b000_0011) | val.is_load_i;
+        val.is_load          = val.opcode == 0b000_0011;
         let u_imm = ((instruction >> 12) as i32) << 12;
 
         let s_imm = ((((instruction >> 25) & 0x7f) << 5) 
