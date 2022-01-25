@@ -123,7 +123,6 @@ impl PipelineStage for Execute {
             },
 
             Ok(ALUOperation::SRL) => {
-                let src = de_val.rs1;
                 let shamt = if is_register_op {
                     de_val.rs2
                 } else {
