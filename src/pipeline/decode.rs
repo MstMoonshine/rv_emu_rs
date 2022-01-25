@@ -84,7 +84,7 @@ impl PipelineStage for Decode {
         val.opcode      = instruction & 0x7f;
         val.rd          = (instruction >> 7) & 0x1f;
         val.funct3      = (instruction >> 12) & 0x7;
-        val.imm11_0     = (instruction >> 20) & 0x7ff;
+        val.imm11_0     = (instruction >> 20) & 0xfff;
         val.funct7      = (instruction >> 25) & 0x7f;
         let rs1_addr = ((instruction >> 15) & 0x1f) as usize;
         let rs2_addr = ((instruction >> 20) & 0x1f) as usize;
@@ -101,7 +101,7 @@ impl PipelineStage for Decode {
 
         let s_imm = ((((instruction >> 25) & 0x7f) << 5) 
             | ((instruction >> 7) & 0x1f)) as i32;
-        let i_imm = (val.imm11_0 << 21) as i32 >> 21;
+        let i_imm = (val.imm11_0 << 20) as i32 >> 20;
 
         val.imm32 = if val.is_store {
             s_imm
