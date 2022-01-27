@@ -17,7 +17,7 @@ pub struct DecodedValues {
     pub is_alu_operation: bool,
     pub is_store: bool,
     pub is_load: bool,
-    pub is_load_i: bool,
+    pub is_lui: bool,
     pub imm32: i32,
 }
 
@@ -37,7 +37,7 @@ impl DecodedValues {
             is_alu_operation: false,
             is_store:   false,
             is_load:    false,
-            is_load_i:  false,
+            is_lui:  false,
             imm32: 0,
         }
     }
@@ -95,7 +95,7 @@ impl PipelineStage for Decode {
 
         val.is_alu_operation = val.opcode & 0b101_1111 == 0b001_0011;
         val.is_store         = val.opcode == 0b010_0011;
-        val.is_load_i        = val.opcode == 0b011_0111;
+        val.is_lui        = val.opcode == 0b011_0111;
         val.is_load          = val.opcode == 0b000_0011;
         let u_imm = ((instruction >> 12) as i32) << 12;
 
@@ -105,7 +105,7 @@ impl PipelineStage for Decode {
 
         val.imm32 = if val.is_store {
             s_imm
-        } else if val.is_load_i {
+        } else if val.is_lui {
             u_imm
         }else if val.is_alu_operation || val.is_load {
             i_imm

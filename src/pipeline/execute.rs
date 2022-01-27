@@ -32,7 +32,7 @@ pub struct ExecutionValues {
     pub is_alu_operation: bool,
     pub is_store:   bool,
     pub is_load:    bool,
-    pub is_load_i:  bool,
+    pub is_lui:  bool,
 }
 
 impl ExecutionValues {
@@ -50,7 +50,7 @@ impl ExecutionValues {
             is_alu_operation:   false,
             is_store:           false, 
             is_load:            false, 
-            is_load_i:          false, 
+            is_lui:          false, 
         }
     }
 }
@@ -96,7 +96,7 @@ impl PipelineStage for Execute {
         exe_val.is_alu_operation = de_val.is_alu_operation;
         exe_val.is_store = de_val.is_store;
         exe_val.is_load = de_val.is_load;
-        exe_val.is_load_i = de_val.is_load_i;
+        exe_val.is_lui = de_val.is_lui;
 
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
