@@ -34,6 +34,6 @@
 ┌────▽─▽────▽┐┌▽─▽───▽─┐	does break down the
 │Bus         ││Reg File│	intuitive structure of 
 └────────────┘└────────┘	the pipeline, which gets
-							concealed behind the 
-							logic of the System.
+                        	concealed behind the 
+                        	logic of the System.
 ```
