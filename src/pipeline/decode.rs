@@ -14,10 +14,16 @@ pub struct DecodedValues {
     pub funct7:         u32,
     pub shamt:          u32,
 
+    pub pc:             u32,
+    pub pc_plus_four:   u32,
+
     pub is_alu_operation: bool,
     pub is_store: bool,
     pub is_load: bool,
     pub is_lui: bool,
+    pub is_jal: bool,
+    pub is_jalr: bool,
+
     pub imm32: i32,
 }
 
@@ -34,10 +40,16 @@ impl DecodedValues {
             funct7:         0,
             shamt:          0,
 
+            pc:             0,
+            pc_plus_four:   0,
+
             is_alu_operation: false,
             is_store:   false,
             is_load:    false,
-            is_lui:  false,
+            is_lui:     false,
+            is_jal:     false,
+            is_jalr:    false,
+
             imm32: 0,
         }
     }
@@ -77,7 +89,8 @@ impl PipelineStage for Decode {
     fn compute(&self) {
         if self.should_stall() { return; }
 
-        let instruction = self.prev_stage.get_instruction_out().0;
+        let if_val = self.prev_stage.get_instruction_fetch_values_out();
+        let instruction = if_val.instruction;
 
         let mut val = self.de_val.borrow_mut();
         val.instruction = instruction;
@@ -90,25 +103,37 @@ impl PipelineStage for Decode {
         let rs2_addr = ((instruction >> 20) & 0x1f) as usize;
         val.shamt       = rs2_addr as u32;
 
+        val.pc              = if_val.pc;
+        val.pc_plus_four    = if_val.pc_plus_four;
+
         val.rs1 = if rs1_addr == 0 { 0 } else { self.reg_file.borrow()[rs1_addr].0 };
         val.rs2 = if rs2_addr == 0 { 0 } else { self.reg_file.borrow()[rs2_addr].0 };
 
         val.is_alu_operation = val.opcode & 0b101_1111 == 0b001_0011;
         val.is_store         = val.opcode == 0b010_0011;
-        val.is_lui        = val.opcode == 0b011_0111;
+        val.is_lui           = val.opcode == 0b011_0111;
         val.is_load          = val.opcode == 0b000_0011;
-        let u_imm = ((instruction >> 12) as i32) << 12;
+        val.is_jal           = val.opcode == 0b110_1111;
+        val.is_jalr          = val.opcode == 0b110_0111;
 
+        let u_imm = ((instruction >> 12) << 12) as i32;
         let s_imm = ((((instruction >> 25) & 0x7f) << 5) 
             | ((instruction >> 7) & 0x1f)) as i32;
-        let i_imm = (val.imm11_0 << 20) as i32 >> 20;
+        let i_imm = (val.imm11_0 << 20) as i32 >> 20; // signed extended
+        let j_imm = ((((instruction & (1 << 31)) << 19)
+                        | ((instruction & (0xff << 12)) << 11)
+                        | ((instruction & (1 << 20)) << 10)
+                        | ((instruction & (0x3ff << 20)) << 1)
+                        << 11) as i32) >> 11; // signed extended
 
         val.imm32 = if val.is_store {
             s_imm
         } else if val.is_lui {
             u_imm
-        }else if val.is_alu_operation || val.is_load {
+        }else if val.is_alu_operation || val.is_load || val.is_jalr {
             i_imm
+        } else if val.is_jal {
+            j_imm
         } else {
             if val.instruction != 0 {
                 println!("Error: not implemented! opcode = {:#09b}, instruction = {:#010x}\n",

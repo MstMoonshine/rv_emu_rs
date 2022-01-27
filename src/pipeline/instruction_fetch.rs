@@ -1,17 +1,31 @@
 use super::{PipelineStage, Stage, memory_access::MemoryAccessWidth};
-use crate::{bus::Bus, register::Register32};
+use crate::bus::Bus;
 use std::{cell::RefCell, sync::Arc};
+
+#[derive(Debug, Clone, Copy)]
+pub struct InstructionFetchValues {
+	pub pc:             u32,
+    pub pc_plus_four:   u32,
+    pub instruction:    u32,
+}
+
+impl InstructionFetchValues {
+    pub fn new(entry_point: u32) -> Self {
+        Self {
+            pc:             entry_point,
+            pc_plus_four:   entry_point + 4,
+            instruction:    0_u32,
+        }
+    }
+}
 
 pub struct InstructionFetch {
     stage: Arc<RefCell<Stage>>,
 
     bus: Arc<Bus>,
 
-    pc: RefCell<Register32>,
-    pc_ready: RefCell<Register32>,
-
-    instruction: RefCell<Register32>,
-    instruction_ready: RefCell<Register32>,
+    if_val: RefCell<InstructionFetchValues>,
+    if_val_ready: RefCell<InstructionFetchValues>,
 }
 
 impl InstructionFetch {
@@ -21,16 +35,13 @@ impl InstructionFetch {
 
             bus: bus.clone(),
 
-            pc: RefCell::new(Register32(bus.memory_layout.rom_start as u32)),
-            pc_ready: RefCell::new(Register32(bus.memory_layout.rom_start as u32)),
-
-            instruction: RefCell::new(Register32(0)),
-            instruction_ready: RefCell::new(Register32(0)),
+            if_val: RefCell::new(InstructionFetchValues::new(bus.memory_layout.rom_start as u32)),
+            if_val_ready: RefCell::new(InstructionFetchValues::new(bus.memory_layout.rom_start as u32)),
         }
     }
 
-    pub fn get_instruction_out(&self) -> Register32 {
-        *self.instruction_ready.borrow()
+    pub fn get_instruction_fetch_values_out(&self) -> InstructionFetchValues {
+        self.if_val_ready.borrow().to_owned()
     }
 }
 
@@ -38,61 +49,20 @@ impl PipelineStage for InstructionFetch {
     fn compute(&self) {
         if self.should_stall() { return; }
 
-        let addr = self.pc.borrow().0 as usize;
-        let ins = self.bus.read(addr, MemoryAccessWidth::Word)
-        .expect("Instruction Fetch Error");
-        self.instruction.replace(Register32(ins));
+        let mut val = self.if_val.borrow_mut();
 
-        self.pc.replace(Register32(addr as u32 + 4));
+        let addr = val.pc as usize;
+        val.instruction = self.bus.read(addr, MemoryAccessWidth::Word)
+        .expect("Instruction Fetch Error");
+
+        val.pc = addr as u32 + 4;
     }
 
     fn latch_next(&self) {
-        self.instruction_ready.replace(*self.instruction.borrow());
-        self.pc_ready.replace(*self.pc.borrow());
+        self.if_val_ready.replace(self.if_val.borrow().to_owned());
     }
 
     fn should_stall(&self) -> bool {
         !matches!(self.stage.borrow().to_owned(), Stage::DE)
-    }
-}
-
-#[cfg(test)]
-#[test]
-fn test() {
-    fn show_if(stage_if: &InstructionFetch) {
-        println!("pc: {:#010x}", stage_if.pc.borrow().0);
-        println!("pc_ready: {:#010x}", stage_if.pc_ready.borrow().0);
-
-        println!("instruction: {:#010x}", stage_if.instruction.borrow().0);
-        println!(
-            "instruction_ready: {:#010x}",
-            stage_if.instruction_ready.borrow().0
-        );
-    }
-
-    let bus = Bus::new(&[
-        0x1122_3344_u32,
-        0xdead_beef,
-        1,
-        2,
-        3,
-        4,
-        5,
-        0xaabbccdd,
-        0x44332211,
-    ]);
-    let stage = Arc::new(RefCell::new(Stage::IF));
-
-    let stage_if = InstructionFetch::new(stage.clone(), Arc::new(bus));
-    show_if(&stage_if);
-
-    for i in 0..21 {
-        println!("------- {} -------", i);
-
-        stage_if.compute();
-
-        show_if(&stage_if);
-
-        stage_if.latch_next();
     }
 }

@@ -28,11 +28,16 @@ pub struct ExecutionValues {
     pub shamt:          u32,
     pub imm32:          i32,
 
+    pub pc:             u32,
+    pub pc_plus_four:   u32,
+
     pub alu_result:     u32,
     pub is_alu_operation: bool,
     pub is_store:   bool,
     pub is_load:    bool,
-    pub is_lui:  bool,
+    pub is_lui:     bool,
+    pub is_jal:     bool,
+    pub is_jalr:    bool,
 }
 
 impl ExecutionValues {
@@ -46,11 +51,16 @@ impl ExecutionValues {
             shamt:              0,
             imm32:              0,
 
+            pc:                 0,
+            pc_plus_four:       0,
+
             alu_result:         0,
             is_alu_operation:   false,
-            is_store:           false, 
-            is_load:            false, 
-            is_lui:          false, 
+            is_store:           false,
+            is_load:            false,
+            is_lui:             false,
+            is_jal:             false,
+            is_jalr:            false,
         }
     }
 }
@@ -97,6 +107,11 @@ impl PipelineStage for Execute {
         exe_val.is_store = de_val.is_store;
         exe_val.is_load = de_val.is_load;
         exe_val.is_lui = de_val.is_lui;
+        exe_val.is_jal = de_val.is_jal;
+        exe_val.is_jalr = de_val.is_jalr;
+
+        exe_val.pc = de_val.pc;
+        exe_val.pc_plus_four = de_val.pc_plus_four;
 
         let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;

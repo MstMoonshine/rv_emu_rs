@@ -35,8 +35,12 @@ impl PipelineStage for WriteBack {
 		let is_alu_operation = mem_val.is_alu_operation;
 		let is_load = mem_val.is_load;
 		let is_lui = mem_val.is_lui;
+		let is_jal = mem_val.is_jal;
+		let is_jalr = mem_val.is_jalr;
 
-		if is_alu_operation || is_load || is_lui {
+		let should_write_back = is_alu_operation | is_load | is_lui | is_jal | is_jalr;
+
+		if should_write_back {
 			self.reg_file.borrow_mut()[rd as usize].0 = write_back_value;
 		}
 
