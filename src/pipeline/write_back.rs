@@ -51,8 +51,10 @@ impl PipelineStage<MemoryAccessValues, WriteBackValues>
             | is_jalr;
 
         if should_write_back {
-            self.reg_file.borrow_mut()[rd as usize].0 =
-                write_back_value;
+            if rd != 0 {
+                self.reg_file.borrow_mut()[rd as usize].0 =
+                    write_back_value;
+            }
         }
     }
 

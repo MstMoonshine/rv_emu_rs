@@ -127,17 +127,27 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
         val.is_jal = val.opcode == 0b110_1111;
         val.is_jalr = val.opcode == 0b110_0111;
 
-        let u_imm = ((instruction >> 12) << 12) as i32;
-        let s_imm = ((((instruction >> 25) & 0x7f) << 5)
+        if val.is_store {
+            let _hook = 1;
+        }
+
+        let u_imm = (instruction >> 12 << 12) as i32;
+        let s_imm = (((((instruction >> 25) & 0x7f) << 5)
             | ((instruction >> 7) & 0x1f))
-            as i32;
+            << 20) as i32
+            >> 20;
         let i_imm = (val.imm11_0 << 20) as i32 >> 20; // signed extended
-        let j_imm = ((((instruction & (1 << 31)) << 19)
-            | ((instruction & (0xff << 12)) << 11)
-            | ((instruction & (1 << 20)) << 10)
-            | ((instruction & (0x3ff << 20)) << 1) << 11)
-            as i32)
-            >> 11; // signed extended
+
+        let j_imm_20 = (instruction & (1 << 31)) >> 31;
+        let j_imm_10_1 = (instruction & (0x3ff << 21)) >> 21;
+        let j_imm_11 = (instruction & (1 << 20)) >> 20;
+        let j_imm_19_12 = (instruction & (0xff << 12)) >> 12;
+        let j_imm = ((j_imm_20 << 20)
+            | (j_imm_19_12 << 12)
+            | (j_imm_11 << 11)
+            | (j_imm_10_1 << 1) << 11)
+            as i32
+            >> 11;
 
         val.imm32 = if val.is_store {
             s_imm

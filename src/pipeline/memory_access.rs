@@ -102,7 +102,12 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
         mem_val.is_jal = exe_val.is_jal;
         mem_val.is_jalr = exe_val.is_jalr;
         mem_val.imm32 = exe_val.imm32;
-        mem_val.write_back_value = exe_val.alu_result;
+        mem_val.write_back_value =
+            if mem_val.is_jal || mem_val.is_jalr {
+                exe_val.pc_plus_four
+            } else {
+                exe_val.alu_result
+            };
 
         // this line should be done in the ALU
         let addr =
@@ -116,7 +121,7 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
             self.bus
                 .write(addr, mem_val.rs2, width)
                 .expect("Memory store error");
-        } else if mem_val.is_load || mem_val.is_lui {
+        } else if mem_val.is_load {
             let signed_extend = mem_val.funct3 & 0b100 == 0;
             let width = MemoryAccessWidth::try_from(
                 mem_val.funct3 & 0b11,
@@ -126,10 +131,7 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
                 .bus
                 .read(addr, width)
                 .expect("Memory load error");
-
-            mem_val.write_back_value = if mem_val.is_lui {
-                mem_val.imm32 as u32
-            } else if signed_extend {
+            mem_val.write_back_value = if signed_extend {
                 match width {
                     MemoryAccessWidth::Byte => {
                         val as i8 as i32 as u32
@@ -142,6 +144,8 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
             } else {
                 val
             };
+        } else if mem_val.is_lui {
+            mem_val.write_back_value = mem_val.imm32 as u32;
         }
     }
 

@@ -3,11 +3,9 @@ use std::{cell::RefCell, sync::Arc};
 use crate::{
     bus::Bus,
     pipeline::{
-        decode::Decode,
-        execute::Execute,
-        instruction_fetch::{InstructionFetch, PCUpdateInfo},
-        memory_access::MemoryAccess,
-        write_back::WriteBack,
+        decode::Decode, execute::Execute,
+        instruction_fetch::InstructionFetch,
+        memory_access::MemoryAccess, write_back::WriteBack,
         PipelineStage, Stage,
     },
     register::{RegFile, Register32, NUM_REGISTER},
@@ -99,10 +97,9 @@ impl RV32System {
     }
 
     fn compute(&self) {
-        self.stage_if.compute(PCUpdateInfo {
-            should_update: false,
-            pc_new: 0,
-        });
+        let pc_update_info = self.stage_exe.get_pc_update_info();
+
+        self.stage_if.compute(pc_update_info);
         self.stage_de.compute(self.stage_if.get_values_out());
         self.stage_exe.compute(self.stage_de.get_values_out());
         self.stage_mem.compute(self.stage_exe.get_values_out());

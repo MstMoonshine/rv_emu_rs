@@ -21,7 +21,7 @@ impl InstructionFetchValues {
     pub fn new(entry_point: u32) -> Self {
         Self {
             pc: entry_point,
-            pc_plus_four: entry_point + 4,
+            pc_plus_four: entry_point,
             instruction: 0_u32,
         }
     }
@@ -66,19 +66,27 @@ impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
             return;
         }
 
-        let mut val = self.if_val.borrow_mut();
+        let mut if_val = self.if_val.borrow_mut();
 
-        let addr = val.pc as usize;
-        val.instruction = self
+        if_val.pc = if values.should_update {
+            values.pc_new
+        } else {
+            if_val.pc_plus_four
+        };
+
+        let addr = if_val.pc as usize;
+        if_val.instruction = self
             .bus
             .read(addr, MemoryAccessWidth::Word)
             .expect("Instruction Fetch Error");
 
-        val.pc = addr as u32 + 4;
+        println!("pc = {:#010x}", if_val.pc);
+
+        if_val.pc_plus_four = if_val.pc + 4;
     }
 
     fn should_stall(&self) -> bool {
-        !matches!(self.stage.borrow().to_owned(), Stage::DE)
+        !matches!(self.stage.borrow().to_owned(), Stage::IF)
     }
 
     fn latch_next(&self) {
@@ -87,6 +95,14 @@ impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
     }
 
     fn get_values_out(&self) -> InstructionFetchValues {
-        self.if_val_ready.borrow().to_owned()
+        // self.if_val_ready.borrow().to_owned()
+
+        // temporarily done in this way, before pipeline becomes multi-period
+        let if_val_ready = self.if_val_ready.borrow().to_owned();
+        InstructionFetchValues {
+            pc: if_val_ready.pc,
+            pc_plus_four: if_val_ready.pc_plus_four,
+            instruction: if_val_ready.instruction,
+        }
     }
 }

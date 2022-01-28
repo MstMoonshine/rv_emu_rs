@@ -2,6 +2,7 @@ use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 use std::{cell::RefCell, sync::Arc};
 
+use super::instruction_fetch::PCUpdateInfo;
 use super::{decode::DecodedValues, PipelineStage, Stage};
 
 #[derive(Debug, Clone, Copy, TryFromPrimitive)]
@@ -67,6 +68,8 @@ impl ExecutionValues {
 pub struct Execute {
     stage: Arc<RefCell<Stage>>,
 
+    pc_update_info: RefCell<PCUpdateInfo>,
+
     exe_val: RefCell<ExecutionValues>,
     exe_val_ready: RefCell<ExecutionValues>,
 }
@@ -76,9 +79,18 @@ impl Execute {
         Self {
             stage,
 
+            pc_update_info: RefCell::new(PCUpdateInfo {
+                should_update: false,
+                pc_new: 0,
+            }),
+
             exe_val: RefCell::new(ExecutionValues::new()),
             exe_val_ready: RefCell::new(ExecutionValues::new()),
         }
+    }
+
+    pub fn get_pc_update_info(&self) -> PCUpdateInfo {
+        self.pc_update_info.borrow().to_owned()
     }
 }
 
@@ -90,6 +102,8 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
 
         let de_val = values;
         let mut exe_val = self.exe_val.borrow_mut();
+        let mut pc_update_info =
+            self.pc_update_info.borrow_mut();
 
         exe_val.rd = de_val.rd;
         exe_val.funct3 = de_val.funct3;
@@ -108,16 +122,29 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
         exe_val.pc = de_val.pc;
         exe_val.pc_plus_four = de_val.pc_plus_four;
 
-        let is_register_op = (de_val.opcode >> 5) & 1 == 1;
+        pc_update_info.should_update =
+            exe_val.is_jal || exe_val.is_jalr;
+
+        if exe_val.pc == 0x4000_0054 {
+            let _hook = 1;
+        }
+
+        let is_register_op =
+            (de_val.opcode >> 5) & 1 == 1 && !exe_val.is_jalr;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
 
-        let right_number = if is_register_op {
+        let right_operant = if is_register_op {
             de_val.rs2
         } else {
             de_val.imm11_0
         };
 
-        exe_val.alu_result =
+        exe_val.alu_result = if exe_val.is_jal {
+            let pc_new =
+                (exe_val.pc as i32 + exe_val.imm32) as u32;
+            pc_update_info.pc_new = pc_new;
+            pc_new
+        } else {
             match ALUOperation::try_from(de_val.funct3) {
                 Ok(ALUOperation::ADD) => {
                     if is_register_op {
@@ -127,7 +154,13 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
                             de_val.rs1 + de_val.rs2
                         }
                     } else {
-                        (de_val.rs1 as i32 + de_val.imm32) as u32
+                        let val = (de_val.rs1 as i32
+                            + de_val.imm32)
+                            as u32;
+                        if de_val.is_jalr {
+                            pc_update_info.pc_new = val;
+                        }
+                        val
                     }
                 }
 
@@ -154,7 +187,7 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
                     }
                 }
                 Ok(ALUOperation::SLTU) => {
-                    if de_val.rs1 < right_number {
+                    if de_val.rs1 < right_operant {
                         1_u32
                     } else {
                         0_u32
@@ -162,7 +195,7 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
                 }
                 Ok(ALUOperation::SLT) => {
                     if (de_val.rs1 as i32)
-                        < (right_number as i32)
+                        < (right_operant as i32)
                     {
                         1_u32
                     } else {
@@ -171,13 +204,13 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
                 }
 
                 Ok(ALUOperation::AND) => {
-                    de_val.rs1 & right_number
+                    de_val.rs1 & right_operant
                 }
                 Ok(ALUOperation::OR) => {
-                    de_val.rs1 | right_number
+                    de_val.rs1 | right_operant
                 }
                 Ok(ALUOperation::XOR) => {
-                    de_val.rs1 ^ right_number
+                    de_val.rs1 ^ right_operant
                 }
 
                 _ => {
@@ -186,7 +219,8 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
                     //     de_val.instruction);
                     0_u32
                 }
-            };
+            }
+        }
     }
 
     fn should_stall(&self) -> bool {
