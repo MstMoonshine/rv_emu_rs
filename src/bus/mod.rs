@@ -1,5 +1,10 @@
-use self::{bus_error::BusError, ram::RAMDevice, rom::ROMDevice};
-use crate::{bus::mmio_device::MMIODevice, pipeline::memory_access::MemoryAccessWidth};
+use self::{
+    bus_error::BusError, ram::RAMDevice, rom::ROMDevice,
+};
+use crate::{
+    bus::mmio_device::MMIODevice,
+    pipeline::memory_access::MemoryAccessWidth,
+};
 
 pub mod bus_error;
 pub mod mmio_device;
@@ -43,15 +48,21 @@ impl Bus {
 
     fn read_chunk(&self, addr: usize) -> u32 {
         if addr >= self.memory_layout.rom_start
-            && addr < self.memory_layout.rom_start + self.memory_layout.rom_size
+            && addr
+                < self.memory_layout.rom_start
+                    + self.memory_layout.rom_size
         {
-            self.rom
-                .read((addr - self.memory_layout.rom_start) >> 2)
+            self.rom.read(
+                (addr - self.memory_layout.rom_start) >> 2,
+            )
         } else if addr >= self.memory_layout.ram_start
-            && addr < self.memory_layout.ram_start + self.memory_layout.ram_size
+            && addr
+                < self.memory_layout.ram_start
+                    + self.memory_layout.ram_size
         {
-            self.ram
-                .read((addr - self.memory_layout.ram_start) >> 2)
+            self.ram.read(
+                (addr - self.memory_layout.ram_start) >> 2,
+            )
         } else {
             0_u32
         }
@@ -59,19 +70,31 @@ impl Bus {
 
     fn write_chunk(&self, addr: usize, val: u32) {
         if addr >= self.memory_layout.rom_start
-            && addr < self.memory_layout.rom_start + self.memory_layout.rom_size
+            && addr
+                < self.memory_layout.rom_start
+                    + self.memory_layout.rom_size
         {
-            self.rom
-                .write((addr - self.memory_layout.rom_start) >> 2, val);
+            self.rom.write(
+                (addr - self.memory_layout.rom_start) >> 2,
+                val,
+            );
         } else if addr >= self.memory_layout.ram_start
-            && addr < self.memory_layout.ram_start + self.memory_layout.ram_size
+            && addr
+                < self.memory_layout.ram_start
+                    + self.memory_layout.ram_size
         {
-            self.ram
-                .write((addr - self.memory_layout.ram_start) >> 2, val);
+            self.ram.write(
+                (addr - self.memory_layout.ram_start) >> 2,
+                val,
+            );
         }
     }
 
-    pub fn read(&self, addr: usize, width: MemoryAccessWidth) -> Result<u32, BusError> {
+    pub fn read(
+        &self,
+        addr: usize,
+        width: MemoryAccessWidth,
+    ) -> Result<u32, BusError> {
         let val = self.read_chunk(addr);
         let offset = addr & 0b11;
 
@@ -82,24 +105,24 @@ impl Bus {
                     0b01 => (val & 0x0000_FF00) >> 8,
                     0b10 => (val & 0x00FF_0000) >> 16,
                     0b11 => (val & 0xFF00_0000) >> 24,
-                    _ => { 0_u32 } // should never happen
+                    _ => 0_u32, // should never happen
+                }
+            }
+            MemoryAccessWidth::HalfWord => match offset {
+                0b00 => val & 0x0000_FFFF,
+                0b01 => (val & 0xFFFF_0000) >> 16,
+                _ => {
+                    return Err(
+                        BusError::LoadAddrMisaligned(addr),
+                    );
                 }
             },
-            MemoryAccessWidth::HalfWord => {
-                match offset {
-                    0b00 => val & 0x0000_FFFF,
-                    0b01 => (val & 0xFFFF_0000) >> 16,
-                    _ => {
-                        return Err(BusError::LoadAddrMisaligned(addr));
-                    }
-                }
-            },
-            MemoryAccessWidth::Word => {
-                match offset {
-                    0b00 => val,
-                    _ => {
-                        return Err(BusError::LoadAddrMisaligned(addr));
-                    }
+            MemoryAccessWidth::Word => match offset {
+                0b00 => val,
+                _ => {
+                    return Err(
+                        BusError::LoadAddrMisaligned(addr),
+                    );
                 }
             },
         };
@@ -107,35 +130,60 @@ impl Bus {
         Ok(read_result)
     }
 
-    pub fn write(&self, addr: usize, val: u32, width: MemoryAccessWidth) -> Result<(), BusError> {
+    pub fn write(
+        &self,
+        addr: usize,
+        val: u32,
+        width: MemoryAccessWidth,
+    ) -> Result<(), BusError> {
         let chunk = self.read_chunk(addr);
         let offset = addr & 0b11;
 
         let write_val = match width {
             MemoryAccessWidth::Byte => {
                 match offset {
-                    0b00 => (chunk & 0xFFFF_FF00) | (val & 0xFF),
-                    0b01 => (chunk & 0xFFFF_00FF) | ((val & 0xFF) << 8),
-                    0b10 => (chunk & 0xFF00_FFFF) | ((val & 0xFF) << 16),
-                    0b11 => (chunk & 0x00FF_FFFF) | ((val & 0xFF) << 24),
-                    _ => { 0_u32 } // should never happen
+                    0b00 => {
+                        (chunk & 0xFFFF_FF00) | (val & 0xFF)
+                    }
+                    0b01 => {
+                        (chunk & 0xFFFF_00FF)
+                            | ((val & 0xFF) << 8)
+                    }
+                    0b10 => {
+                        (chunk & 0xFF00_FFFF)
+                            | ((val & 0xFF) << 16)
+                    }
+                    0b11 => {
+                        (chunk & 0x00FF_FFFF)
+                            | ((val & 0xFF) << 24)
+                    }
+                    _ => 0_u32, // should never happen
+                }
+            }
+            MemoryAccessWidth::HalfWord => match offset {
+                0b00 => {
+                    (chunk & 0xFFFF_0000) | (val & 0xFFFF)
+                }
+                0b01 => {
+                    (chunk & 0x0000_FFFF)
+                        | ((val & 0xFFFF) << 16)
+                }
+                _ => {
+                    return Err(
+                        BusError::StoreAddrMisaligned(
+                            addr, val,
+                        ),
+                    );
                 }
             },
-            MemoryAccessWidth::HalfWord => {
-                match offset {
-                    0b00 => (chunk & 0xFFFF_0000) | (val & 0xFFFF),
-                    0b01 => (chunk & 0x0000_FFFF) | ((val & 0xFFFF) << 16),
-                    _ => {
-                        return Err(BusError::StoreAddrMisaligned(addr, val));
-                    }
-                }
-            },
-            MemoryAccessWidth::Word => {
-                match offset {
-                    0b00 => val,
-                    _ => {
-                        return Err(BusError::StoreAddrMisaligned(addr, val));
-                    }
+            MemoryAccessWidth::Word => match offset {
+                0b00 => val,
+                _ => {
+                    return Err(
+                        BusError::StoreAddrMisaligned(
+                            addr, val,
+                        ),
+                    );
                 }
             },
         };
@@ -157,15 +205,27 @@ impl Bus {
 #[cfg(test)]
 #[test]
 fn test() {
-    fn test_read(bus: &Bus, addr: usize, width: MemoryAccessWidth) {
-        let val = bus.read(addr, width).expect("read error");
+    fn test_read(
+        bus: &Bus,
+        addr: usize,
+        width: MemoryAccessWidth,
+    ) {
+        let val =
+            bus.read(addr, width).expect("read error");
         println!("{:#010x}: {:#010x}", addr, val);
     }
 
-    fn test_write(bus: &Bus, addr: usize, val: u32, width: MemoryAccessWidth) {
+    fn test_write(
+        bus: &Bus,
+        addr: usize,
+        val: u32,
+        width: MemoryAccessWidth,
+    ) {
         let ret = bus.write(addr, val, width);
         match ret {
-            Err(e) => println!("{}", e),
+            Err(e) => {
+                println!("{}", e)
+            }
             _ => (),
         }
     }
@@ -201,6 +261,11 @@ fn test() {
     test_read(&bus, 0x4000_0010, width);
 
     test_read(&bus, 0x8000_0001, MemoryAccessWidth::Byte);
-    test_write(&bus, 0x8000_0001, 1, MemoryAccessWidth::Byte);
+    test_write(
+        &bus,
+        0x8000_0001,
+        1,
+        MemoryAccessWidth::Byte,
+    );
     test_read(&bus, 0x8000_0001, MemoryAccessWidth::Byte);
 }

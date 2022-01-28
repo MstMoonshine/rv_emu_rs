@@ -21,10 +21,13 @@ impl RAMDevice {
     }
 
     pub fn mem_dump(&self, size: usize) {
-        let dump_region = &self.ram.borrow().clone()[..size / 4];
+        let dump_region =
+            &self.ram.borrow().clone()[..size / 4];
 
-        for (i, val) in dump_region.into_iter().enumerate() {
-            println!("{:#010x}: {:#010x}",
+        for (i, val) in dump_region.into_iter().enumerate()
+        {
+            println!(
+                "{:#010x}: {:#010x}",
                 RAM_START + &i * 4,
                 val,
             )

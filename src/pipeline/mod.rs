@@ -1,6 +1,6 @@
-pub mod instruction_fetch;
 pub mod decode;
 pub mod execute;
+pub mod instruction_fetch;
 pub mod memory_access;
 pub mod write_back;
 

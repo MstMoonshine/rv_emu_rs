@@ -13,9 +13,9 @@ extern crate web_sys;
 
 // -----
 
-use rv_system::RV32System;
 use crate::register::{Register32, NUM_REGISTER};
 use bus::RAM_START;
+use rv_system::RV32System;
 
 mod bus;
 mod pipeline;
@@ -36,11 +36,14 @@ mod rv_system;
 // 0x00721423, // sh	x7, 8(x4)
 // 0x00720623, // sb	x7, 12(x4)
 
-fn run(rom_file: &str) -> ([Register32; NUM_REGISTER], Vec<u32>) {
-    let instructions: Vec<u32> = rom_file.split_whitespace()
-    .map(|ins| u32::from_str_radix(ins, 16).unwrap())
-    .collect();
-    
+fn run(
+    rom_file: &str,
+) -> ([Register32; NUM_REGISTER], Vec<u32>) {
+    let instructions: Vec<u32> = rom_file
+        .split_whitespace()
+        .map(|ins| u32::from_str_radix(ins, 16).unwrap())
+        .collect();
+
     let file = &instructions[..];
 
     let rv32_sys = RV32System::new(file);
@@ -58,7 +61,8 @@ pub fn emulate(rom_file: String) -> String {
     output = output + &format!("Register dump:\n");
     for i in 0..31 {
         let reg_x = reg[i].0;
-        output = output + &format!("x{}: {:#010x}\n", i, reg_x);
+        output =
+            output + &format!("x{}: {:#010x}\n", i, reg_x);
     }
 
     output = output + &format!("-----\n");
@@ -70,13 +74,15 @@ pub fn emulate(rom_file: String) -> String {
             mem[i * 4 + 2],
             mem[i * 4 + 3],
         );
-        output = output + &format!("{:#010x}: {:#010x} {:#010x} {:#010x} {:#010x}\n",
-            RAM_START + &i * 16,
-            val.0,
-            val.1,
-            val.2,
-            val.3,
-        )
+        output = output
+            + &format!(
+                "{:#010x}: {:#010x} {:#010x} {:#010x} {:#010x}\n",
+                RAM_START + &i * 16,
+                val.0,
+                val.1,
+                val.2,
+                val.3,
+            )
     }
 
     output
