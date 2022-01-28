@@ -1,11 +1,11 @@
 use super::{
-    instruction_fetch::InstructionFetch, PipelineStage,
-    Stage,
+    instruction_fetch::InstructionFetchValues,
+    PipelineStage, Stage,
 };
 use crate::register::RegFile;
 use std::{cell::RefCell, sync::Arc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct DecodedValues {
     pub instruction: u32,
     pub opcode: u32,
@@ -60,7 +60,6 @@ impl DecodedValues {
 
 pub struct Decode {
     stage: Arc<RefCell<Stage>>,
-    prev_stage: Arc<InstructionFetch>,
 
     reg_file: Arc<RegFile>,
 
@@ -71,12 +70,10 @@ pub struct Decode {
 impl Decode {
     pub fn new(
         stage: Arc<RefCell<Stage>>,
-        prev_stage: Arc<InstructionFetch>,
         reg_file: Arc<RegFile>,
     ) -> Self {
         Self {
             stage,
-            prev_stage,
 
             reg_file,
 
@@ -84,21 +81,17 @@ impl Decode {
             de_val_ready: RefCell::new(DecodedValues::new()),
         }
     }
-
-    pub fn get_decoded_values_out(&self) -> DecodedValues {
-        self.de_val_ready.borrow().to_owned()
-    }
 }
 
-impl PipelineStage for Decode {
-    fn compute(&self) {
+impl PipelineStage<InstructionFetchValues, DecodedValues>
+    for Decode
+{
+    fn compute(&self, values: InstructionFetchValues) {
         if self.should_stall() {
             return;
         }
 
-        let if_val = self
-            .prev_stage
-            .get_instruction_fetch_values_out();
+        let if_val = values;
         let instruction = if_val.instruction;
 
         let mut val = self.de_val.borrow_mut();
@@ -171,12 +164,16 @@ impl PipelineStage for Decode {
         };
     }
 
+    fn should_stall(&self) -> bool {
+        !matches!(self.stage.borrow().to_owned(), Stage::DE)
+    }
+
+    fn get_values_out(&self) -> DecodedValues {
+        self.de_val_ready.borrow().to_owned()
+    }
+
     fn latch_next(&self) {
         self.de_val_ready
             .replace(self.de_val.borrow().to_owned());
-    }
-
-    fn should_stall(&self) -> bool {
-        !matches!(self.stage.borrow().to_owned(), Stage::DE)
     }
 }

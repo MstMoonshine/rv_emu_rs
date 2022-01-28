@@ -13,8 +13,13 @@ pub enum Stage {
     WB,
 }
 
-pub trait PipelineStage {
-    fn compute(&self);
-    fn latch_next(&self);
+pub trait PipelineStage<TI, TO>
+where
+    TI: Clone + Copy,
+    TO: Clone + Copy,
+{
+    fn compute(&self, values: TI);
     fn should_stall(&self) -> bool;
+    fn get_values_out(&self) -> TO;
+    fn latch_next(&self);
 }

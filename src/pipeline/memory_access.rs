@@ -4,7 +4,9 @@ use num_enum::TryFromPrimitive;
 
 use crate::bus::Bus;
 
-use super::{execute::Execute, PipelineStage, Stage};
+use super::{
+    execute::ExecutionValues, PipelineStage, Stage,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MemoryAccessValues {
@@ -55,7 +57,6 @@ pub enum MemoryAccessWidth {
 
 pub struct MemoryAccess {
     stage: Arc<RefCell<Stage>>,
-    prev_stage: Arc<Execute>,
 
     bus: Arc<Bus>,
 
@@ -66,12 +67,10 @@ pub struct MemoryAccess {
 impl MemoryAccess {
     pub fn new(
         stage: Arc<RefCell<Stage>>,
-        prev_stage: Arc<Execute>,
         bus: Arc<Bus>,
     ) -> Self {
         Self {
             stage,
-            prev_stage,
 
             bus,
 
@@ -81,22 +80,17 @@ impl MemoryAccess {
             ),
         }
     }
-
-    pub fn get_memory_access_values_out(
-        &self,
-    ) -> MemoryAccessValues {
-        self.mem_val_ready.borrow().to_owned()
-    }
 }
 
-impl PipelineStage for MemoryAccess {
-    fn compute(&self) {
+impl PipelineStage<ExecutionValues, MemoryAccessValues>
+    for MemoryAccess
+{
+    fn compute(&self, values: ExecutionValues) {
         if self.should_stall() {
             return;
         }
 
-        let exe_val =
-            self.prev_stage.get_execution_values_out();
+        let exe_val = values;
         let mut mem_val = self.mem_val.borrow_mut();
 
         mem_val.rd = exe_val.rd;
@@ -153,15 +147,19 @@ impl PipelineStage for MemoryAccess {
         }
     }
 
-    fn latch_next(&self) {
-        self.mem_val_ready
-            .replace(self.mem_val.borrow().to_owned());
-    }
-
     fn should_stall(&self) -> bool {
         !matches!(
             self.stage.borrow().to_owned(),
             Stage::MEM
         )
+    }
+
+    fn latch_next(&self) {
+        self.mem_val_ready
+            .replace(self.mem_val.borrow().to_owned());
+    }
+
+    fn get_values_out(&self) -> MemoryAccessValues {
+        self.mem_val_ready.borrow().to_owned()
     }
 }

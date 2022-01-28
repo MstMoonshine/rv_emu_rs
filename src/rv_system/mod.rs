@@ -3,9 +3,13 @@ use std::{cell::RefCell, sync::Arc};
 use crate::{
     bus::Bus,
     pipeline::{
-        decode::Decode, execute::Execute,
-        instruction_fetch::InstructionFetch,
-        memory_access::MemoryAccess, write_back::WriteBack,
+        decode::Decode,
+        execute::Execute,
+        instruction_fetch::{
+            InstructionFetch, PCUpdateInfo,
+        },
+        memory_access::MemoryAccess,
+        write_back::WriteBack,
         PipelineStage, Stage,
     },
     register::{RegFile, Register32, NUM_REGISTER},
@@ -17,11 +21,11 @@ pub struct RV32System {
     bus: Arc<Bus>,
     reg_file: Arc<RegFile>,
 
-    stage_if: Arc<InstructionFetch>,
-    stage_de: Arc<Decode>,
-    stage_exe: Arc<Execute>,
-    stage_mem: Arc<MemoryAccess>,
-    stage_wb: Arc<WriteBack>,
+    stage_if: InstructionFetch,
+    stage_de: Decode,
+    stage_exe: Execute,
+    stage_mem: MemoryAccess,
+    stage_wb: WriteBack,
 }
 
 impl RV32System {
@@ -32,29 +36,17 @@ impl RV32System {
             [Register32(0); NUM_REGISTER],
         ));
 
-        let stage_if = Arc::new(InstructionFetch::new(
+        let stage_if = InstructionFetch::new(
             stage.clone(),
             bus.clone(),
-        ));
-        let stage_de = Arc::new(Decode::new(
-            stage.clone(),
-            stage_if.clone(),
-            reg_file.clone(),
-        ));
-        let stage_exe = Arc::new(Execute::new(
-            stage.clone(),
-            stage_de.clone(),
-        ));
-        let stage_mem = Arc::new(MemoryAccess::new(
-            stage.clone(),
-            stage_exe.clone(),
-            bus.clone(),
-        ));
-        let stage_wb = Arc::new(WriteBack::new(
-            stage.clone(),
-            stage_mem.clone(),
-            reg_file.clone(),
-        ));
+        );
+        let stage_de =
+            Decode::new(stage.clone(), reg_file.clone());
+        let stage_exe = Execute::new(stage.clone());
+        let stage_mem =
+            MemoryAccess::new(stage.clone(), bus.clone());
+        let stage_wb =
+            WriteBack::new(stage.clone(), reg_file.clone());
 
         Self {
             stage,
@@ -113,11 +105,18 @@ impl RV32System {
     }
 
     fn compute(&self) {
-        self.stage_if.compute();
-        self.stage_de.compute();
-        self.stage_exe.compute();
-        self.stage_mem.compute();
-        self.stage_wb.compute();
+        self.stage_if.compute(PCUpdateInfo {
+            should_update: false,
+            pc_new: 0,
+        });
+        self.stage_de
+            .compute(self.stage_if.get_values_out());
+        self.stage_exe
+            .compute(self.stage_de.get_values_out());
+        self.stage_mem
+            .compute(self.stage_exe.get_values_out());
+        self.stage_wb
+            .compute(self.stage_mem.get_values_out());
     }
 
     fn latch_next(&self) {

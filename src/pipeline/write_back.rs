@@ -3,12 +3,16 @@ use std::{cell::RefCell, sync::Arc};
 use crate::register::RegFile;
 
 use super::{
-    memory_access::MemoryAccess, PipelineStage, Stage,
+    memory_access::MemoryAccessValues, PipelineStage, Stage,
 };
+
+#[derive(Debug, Clone, Copy)]
+pub struct WriteBackValues {
+    _dummy: u8,
+}
 
 pub struct WriteBack {
     stage: Arc<RefCell<Stage>>,
-    prev_stage: Arc<MemoryAccess>,
 
     reg_file: Arc<RegFile>,
 }
@@ -16,26 +20,21 @@ pub struct WriteBack {
 impl WriteBack {
     pub fn new(
         stage: Arc<RefCell<Stage>>,
-        prev_stage: Arc<MemoryAccess>,
         reg_file: Arc<RegFile>,
     ) -> Self {
-        Self {
-            stage,
-            prev_stage,
-
-            reg_file,
-        }
+        Self { stage, reg_file }
     }
 }
 
-impl PipelineStage for WriteBack {
-    fn compute(&self) {
+impl PipelineStage<MemoryAccessValues, WriteBackValues>
+    for WriteBack
+{
+    fn compute(&self, values: MemoryAccessValues) {
         if self.should_stall() {
             return;
         }
 
-        let mem_val =
-            self.prev_stage.get_memory_access_values_out();
+        let mem_val = values;
 
         let write_back_value = mem_val.write_back_value;
         let rd = mem_val.rd;
@@ -57,9 +56,13 @@ impl PipelineStage for WriteBack {
         }
     }
 
-    fn latch_next(&self) {}
-
     fn should_stall(&self) -> bool {
         !matches!(self.stage.borrow().to_owned(), Stage::WB)
+    }
+
+    fn latch_next(&self) {}
+
+    fn get_values_out(&self) -> WriteBackValues {
+        WriteBackValues { _dummy: 0 }
     }
 }

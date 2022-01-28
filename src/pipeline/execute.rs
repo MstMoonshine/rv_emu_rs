@@ -2,7 +2,7 @@ use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 use std::{cell::RefCell, sync::Arc};
 
-use super::{decode::Decode, PipelineStage, Stage};
+use super::{decode::DecodedValues, PipelineStage, Stage};
 
 #[derive(Debug, Clone, Copy, TryFromPrimitive)]
 #[repr(u32)]
@@ -66,20 +66,15 @@ impl ExecutionValues {
 
 pub struct Execute {
     stage: Arc<RefCell<Stage>>,
-    prev_stage: Arc<Decode>,
 
     exe_val: RefCell<ExecutionValues>,
     exe_val_ready: RefCell<ExecutionValues>,
 }
 
 impl Execute {
-    pub fn new(
-        stage: Arc<RefCell<Stage>>,
-        prev_stage: Arc<Decode>,
-    ) -> Self {
+    pub fn new(stage: Arc<RefCell<Stage>>) -> Self {
         Self {
             stage,
-            prev_stage,
 
             exe_val: RefCell::new(ExecutionValues::new()),
             exe_val_ready: RefCell::new(
@@ -87,22 +82,17 @@ impl Execute {
             ),
         }
     }
-
-    pub fn get_execution_values_out(
-        &self,
-    ) -> ExecutionValues {
-        self.exe_val_ready.borrow().to_owned()
-    }
 }
 
-impl PipelineStage for Execute {
-    fn compute(&self) {
+impl PipelineStage<DecodedValues, ExecutionValues>
+    for Execute
+{
+    fn compute(&self, values: DecodedValues) {
         if self.should_stall() {
             return;
         }
 
-        let de_val =
-            self.prev_stage.get_decoded_values_out();
+        let de_val = values;
         let mut exe_val = self.exe_val.borrow_mut();
 
         exe_val.rd = de_val.rd;
@@ -205,15 +195,19 @@ impl PipelineStage for Execute {
             };
     }
 
-    fn latch_next(&self) {
-        self.exe_val_ready
-            .replace(self.exe_val.borrow().to_owned());
-    }
-
     fn should_stall(&self) -> bool {
         !matches!(
             self.stage.borrow().to_owned(),
             Stage::EXE
         )
+    }
+
+    fn latch_next(&self) {
+        self.exe_val_ready
+            .replace(self.exe_val.borrow().to_owned());
+    }
+
+    fn get_values_out(&self) -> ExecutionValues {
+        self.exe_val_ready.borrow().to_owned()
     }
 }

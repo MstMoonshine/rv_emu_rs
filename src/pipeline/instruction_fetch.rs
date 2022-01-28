@@ -5,6 +5,12 @@ use crate::bus::Bus;
 use std::{cell::RefCell, sync::Arc};
 
 #[derive(Debug, Clone, Copy)]
+pub struct PCUpdateInfo {
+    pub should_update: bool,
+    pub pc_new: u32,
+}
+
+#[derive(Debug, Clone, Copy)]
 pub struct InstructionFetchValues {
     pub pc: u32,
     pub pc_plus_four: u32,
@@ -52,16 +58,12 @@ impl InstructionFetch {
             ),
         }
     }
-
-    pub fn get_instruction_fetch_values_out(
-        &self,
-    ) -> InstructionFetchValues {
-        self.if_val_ready.borrow().to_owned()
-    }
 }
 
-impl PipelineStage for InstructionFetch {
-    fn compute(&self) {
+impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
+    for InstructionFetch
+{
+    fn compute(&self, values: PCUpdateInfo) {
         if self.should_stall() {
             return;
         }
@@ -77,12 +79,16 @@ impl PipelineStage for InstructionFetch {
         val.pc = addr as u32 + 4;
     }
 
+    fn should_stall(&self) -> bool {
+        !matches!(self.stage.borrow().to_owned(), Stage::DE)
+    }
+
     fn latch_next(&self) {
         self.if_val_ready
             .replace(self.if_val.borrow().to_owned());
     }
 
-    fn should_stall(&self) -> bool {
-        !matches!(self.stage.borrow().to_owned(), Stage::DE)
+    fn get_values_out(&self) -> InstructionFetchValues {
+        self.if_val_ready.borrow().to_owned()
     }
 }
