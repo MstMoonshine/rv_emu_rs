@@ -30,10 +30,7 @@ impl ROMDevice {
         }
     }
 
-    pub fn _load(
-        &self,
-        file: &[u32],
-    ) -> Result<(), ROMError> {
+    pub fn _load(&self, file: &[u32]) -> Result<(), ROMError> {
         if file.len() * 4 > self.size {
             Err(ROMError::_LoadError)
         } else {

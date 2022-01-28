@@ -46,8 +46,7 @@ pub fn main() {
     output = output + &format!("Register dump:\n");
     for i in 0..31 {
         let reg_x = reg[i].0;
-        output =
-            output + &format!("x{}: {:#010x}\n", i, reg_x);
+        output = output + &format!("x{}: {:#010x}\n", i, reg_x);
     }
 
     output = output + &format!("-----\n");

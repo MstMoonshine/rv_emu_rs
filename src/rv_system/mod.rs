@@ -5,9 +5,7 @@ use crate::{
     pipeline::{
         decode::Decode,
         execute::Execute,
-        instruction_fetch::{
-            InstructionFetch, PCUpdateInfo,
-        },
+        instruction_fetch::{InstructionFetch, PCUpdateInfo},
         memory_access::MemoryAccess,
         write_back::WriteBack,
         PipelineStage, Stage,
@@ -36,10 +34,8 @@ impl RV32System {
             [Register32(0); NUM_REGISTER],
         ));
 
-        let stage_if = InstructionFetch::new(
-            stage.clone(),
-            bus.clone(),
-        );
+        let stage_if =
+            InstructionFetch::new(stage.clone(), bus.clone());
         let stage_de =
             Decode::new(stage.clone(), reg_file.clone());
         let stage_exe = Execute::new(stage.clone());
@@ -62,15 +58,13 @@ impl RV32System {
     }
 
     pub fn run(&self) {
-        for _ in 0..((self.bus.memory_layout.rom_size / 4
-            + 1)
-            * 5)
+        for _ in
+            0..((self.bus.memory_layout.rom_size / 4 + 1) * 5)
         {
             self.compute();
             self.latch_next();
 
-            let current_stage =
-                self.stage.borrow().to_owned();
+            let current_stage = self.stage.borrow().to_owned();
             let next_stage = match current_stage {
                 Stage::IF => Stage::DE,
                 Stage::DE => Stage::EXE,
@@ -109,14 +103,10 @@ impl RV32System {
             should_update: false,
             pc_new: 0,
         });
-        self.stage_de
-            .compute(self.stage_if.get_values_out());
-        self.stage_exe
-            .compute(self.stage_de.get_values_out());
-        self.stage_mem
-            .compute(self.stage_exe.get_values_out());
-        self.stage_wb
-            .compute(self.stage_mem.get_values_out());
+        self.stage_de.compute(self.stage_if.get_values_out());
+        self.stage_exe.compute(self.stage_de.get_values_out());
+        self.stage_mem.compute(self.stage_exe.get_values_out());
+        self.stage_wb.compute(self.stage_mem.get_values_out());
     }
 
     fn latch_next(&self) {

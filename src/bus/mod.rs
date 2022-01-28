@@ -52,17 +52,15 @@ impl Bus {
                 < self.memory_layout.rom_start
                     + self.memory_layout.rom_size
         {
-            self.rom.read(
-                (addr - self.memory_layout.rom_start) >> 2,
-            )
+            self.rom
+                .read((addr - self.memory_layout.rom_start) >> 2)
         } else if addr >= self.memory_layout.ram_start
             && addr
                 < self.memory_layout.ram_start
                     + self.memory_layout.ram_size
         {
-            self.ram.read(
-                (addr - self.memory_layout.ram_start) >> 2,
-            )
+            self.ram
+                .read((addr - self.memory_layout.ram_start) >> 2)
         } else {
             0_u32
         }
@@ -112,17 +110,17 @@ impl Bus {
                 0b00 => val & 0x0000_FFFF,
                 0b01 => (val & 0xFFFF_0000) >> 16,
                 _ => {
-                    return Err(
-                        BusError::LoadAddrMisaligned(addr),
-                    );
+                    return Err(BusError::LoadAddrMisaligned(
+                        addr,
+                    ));
                 }
             },
             MemoryAccessWidth::Word => match offset {
                 0b00 => val,
                 _ => {
-                    return Err(
-                        BusError::LoadAddrMisaligned(addr),
-                    );
+                    return Err(BusError::LoadAddrMisaligned(
+                        addr,
+                    ));
                 }
             },
         };
@@ -142,9 +140,7 @@ impl Bus {
         let write_val = match width {
             MemoryAccessWidth::Byte => {
                 match offset {
-                    0b00 => {
-                        (chunk & 0xFFFF_FF00) | (val & 0xFF)
-                    }
+                    0b00 => (chunk & 0xFFFF_FF00) | (val & 0xFF),
                     0b01 => {
                         (chunk & 0xFFFF_00FF)
                             | ((val & 0xFF) << 8)
@@ -161,29 +157,23 @@ impl Bus {
                 }
             }
             MemoryAccessWidth::HalfWord => match offset {
-                0b00 => {
-                    (chunk & 0xFFFF_0000) | (val & 0xFFFF)
-                }
+                0b00 => (chunk & 0xFFFF_0000) | (val & 0xFFFF),
                 0b01 => {
                     (chunk & 0x0000_FFFF)
                         | ((val & 0xFFFF) << 16)
                 }
                 _ => {
-                    return Err(
-                        BusError::StoreAddrMisaligned(
-                            addr, val,
-                        ),
-                    );
+                    return Err(BusError::StoreAddrMisaligned(
+                        addr, val,
+                    ));
                 }
             },
             MemoryAccessWidth::Word => match offset {
                 0b00 => val,
                 _ => {
-                    return Err(
-                        BusError::StoreAddrMisaligned(
-                            addr, val,
-                        ),
-                    );
+                    return Err(BusError::StoreAddrMisaligned(
+                        addr, val,
+                    ));
                 }
             },
         };
@@ -210,8 +200,7 @@ fn test() {
         addr: usize,
         width: MemoryAccessWidth,
     ) {
-        let val =
-            bus.read(addr, width).expect("read error");
+        let val = bus.read(addr, width).expect("read error");
         println!("{:#010x}: {:#010x}", addr, val);
     }
 
@@ -261,11 +250,6 @@ fn test() {
     test_read(&bus, 0x4000_0010, width);
 
     test_read(&bus, 0x8000_0001, MemoryAccessWidth::Byte);
-    test_write(
-        &bus,
-        0x8000_0001,
-        1,
-        MemoryAccessWidth::Byte,
-    );
+    test_write(&bus, 0x8000_0001, 1, MemoryAccessWidth::Byte);
     test_read(&bus, 0x8000_0001, MemoryAccessWidth::Byte);
 }

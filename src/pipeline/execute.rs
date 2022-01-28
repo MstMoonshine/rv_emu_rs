@@ -77,16 +77,12 @@ impl Execute {
             stage,
 
             exe_val: RefCell::new(ExecutionValues::new()),
-            exe_val_ready: RefCell::new(
-                ExecutionValues::new(),
-            ),
+            exe_val_ready: RefCell::new(ExecutionValues::new()),
         }
     }
 }
 
-impl PipelineStage<DecodedValues, ExecutionValues>
-    for Execute
-{
+impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
     fn compute(&self, values: DecodedValues) {
         if self.should_stall() {
             return;
@@ -131,8 +127,7 @@ impl PipelineStage<DecodedValues, ExecutionValues>
                             de_val.rs1 + de_val.rs2
                         }
                     } else {
-                        (de_val.rs1 as i32 + de_val.imm32)
-                            as u32
+                        (de_val.rs1 as i32 + de_val.imm32) as u32
                     }
                 }
 
@@ -152,8 +147,7 @@ impl PipelineStage<DecodedValues, ExecutionValues>
                     };
 
                     if is_alternate {
-                        ((de_val.rs1 as i32)
-                            >> (shamt & 0x1f))
+                        ((de_val.rs1 as i32) >> (shamt & 0x1f))
                             as u32 // SRA
                     } else {
                         de_val.rs1 >> (shamt & 0x1F) // SRL
@@ -196,10 +190,7 @@ impl PipelineStage<DecodedValues, ExecutionValues>
     }
 
     fn should_stall(&self) -> bool {
-        !matches!(
-            self.stage.borrow().to_owned(),
-            Stage::EXE
-        )
+        !matches!(self.stage.borrow().to_owned(), Stage::EXE)
     }
 
     fn latch_next(&self) {

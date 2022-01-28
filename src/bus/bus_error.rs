@@ -12,11 +12,7 @@ impl fmt::Display for BusError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             BusError::LoadAddrMisaligned(addr) => {
-                write!(
-                    f,
-                    "Read Misaligned at {:#010x}",
-                    addr
-                )
+                write!(f, "Read Misaligned at {:#010x}", addr)
             }
             BusError::StoreAddrMisaligned(addr, val) => {
                 write!(

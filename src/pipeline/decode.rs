@@ -1,6 +1,6 @@
 use super::{
-    instruction_fetch::InstructionFetchValues,
-    PipelineStage, Stage,
+    instruction_fetch::InstructionFetchValues, PipelineStage,
+    Stage,
 };
 use crate::register::RegFile;
 use std::{cell::RefCell, sync::Arc};
@@ -101,10 +101,8 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
         val.funct3 = (instruction >> 12) & 0x7;
         val.imm11_0 = (instruction >> 20) & 0xfff;
         val.funct7 = (instruction >> 25) & 0x7f;
-        let rs1_addr =
-            ((instruction >> 15) & 0x1f) as usize;
-        let rs2_addr =
-            ((instruction >> 20) & 0x1f) as usize;
+        let rs1_addr = ((instruction >> 15) & 0x1f) as usize;
+        let rs2_addr = ((instruction >> 20) & 0x1f) as usize;
         val.shamt = rs2_addr as u32;
 
         val.pc = if_val.pc;

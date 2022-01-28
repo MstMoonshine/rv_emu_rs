@@ -46,11 +46,9 @@ impl InstructionFetch {
 
             bus: bus.clone(),
 
-            if_val: RefCell::new(
-                InstructionFetchValues::new(
-                    bus.memory_layout.rom_start as u32,
-                ),
-            ),
+            if_val: RefCell::new(InstructionFetchValues::new(
+                bus.memory_layout.rom_start as u32,
+            )),
             if_val_ready: RefCell::new(
                 InstructionFetchValues::new(
                     bus.memory_layout.rom_start as u32,

@@ -4,9 +4,7 @@ use num_enum::TryFromPrimitive;
 
 use crate::bus::Bus;
 
-use super::{
-    execute::ExecutionValues, PipelineStage, Stage,
-};
+use super::{execute::ExecutionValues, PipelineStage, Stage};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MemoryAccessValues {
@@ -107,8 +105,8 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
         mem_val.write_back_value = exe_val.alu_result;
 
         // this line should be done in the ALU
-        let addr = (mem_val.rs1 as i32 + mem_val.imm32)
-            as u32 as usize;
+        let addr =
+            (mem_val.rs1 as i32 + mem_val.imm32) as u32 as usize;
 
         if mem_val.is_store {
             let width = MemoryAccessWidth::try_from(
@@ -148,10 +146,7 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
     }
 
     fn should_stall(&self) -> bool {
-        !matches!(
-            self.stage.borrow().to_owned(),
-            Stage::MEM
-        )
+        !matches!(self.stage.borrow().to_owned(), Stage::MEM)
     }
 
     fn latch_next(&self) {
