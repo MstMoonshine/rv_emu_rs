@@ -80,6 +80,9 @@ impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
             .read(addr, MemoryAccessWidth::Word)
             .expect("Instruction Fetch Error");
 
+        // tracing
+        println!("pc = {:#010x}", addr);
+
         if_val.pc_plus_four = if_val.pc + 4;
     }
 

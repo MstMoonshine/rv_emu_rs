@@ -36,7 +36,7 @@ fn run(
     let rv32_sys = RV32System::new(rom_file);
     rv32_sys.run();
 
-    (rv32_sys.get_reg(), rv32_sys.get_mem(0x110))
+    (rv32_sys.get_reg(), rv32_sys.get_mem(0x210))
 }
 
 pub fn main() {

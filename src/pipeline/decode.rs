@@ -26,6 +26,7 @@ pub struct DecodedValues {
     pub is_lui: bool,
     pub is_jal: bool,
     pub is_jalr: bool,
+    pub is_branch: bool,
 
     pub imm32: i32,
 }
@@ -52,6 +53,7 @@ impl DecodedValues {
             is_lui: false,
             is_jal: false,
             is_jalr: false,
+            is_branch: false,
 
             imm32: 0,
         }
@@ -126,10 +128,7 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
         val.is_load = val.opcode == 0b000_0011;
         val.is_jal = val.opcode == 0b110_1111;
         val.is_jalr = val.opcode == 0b110_0111;
-
-        if val.is_store {
-            let _hook = 1;
-        }
+        val.is_branch = val.opcode == 0b110_0011;
 
         let u_imm = (instruction >> 12 << 12) as i32;
         let s_imm = (((((instruction >> 25) & 0x7f) << 5)
@@ -138,16 +137,27 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
             >> 20;
         let i_imm = (val.imm11_0 << 20) as i32 >> 20; // signed extended
 
-        let j_imm_20 = (instruction & (1 << 31)) >> 31;
+        let j_imm_20 = (instruction & (0x1 << 31)) >> 31;
         let j_imm_10_1 = (instruction & (0x3ff << 21)) >> 21;
-        let j_imm_11 = (instruction & (1 << 20)) >> 20;
+        let j_imm_11 = (instruction & (0x1 << 20)) >> 20;
         let j_imm_19_12 = (instruction & (0xff << 12)) >> 12;
-        let j_imm = ((j_imm_20 << 20)
+        let j_imm = (((j_imm_20 << 20)
             | (j_imm_19_12 << 12)
             | (j_imm_11 << 11)
-            | (j_imm_10_1 << 1) << 11)
-            as i32
+            | (j_imm_10_1 << 1))
+            << 11) as i32
             >> 11;
+
+        let b_imm_12 = (instruction & (0x1 << 31)) >> 31;
+        let b_imm_10_5 = (instruction & (0x3f << 25)) >> 25;
+        let b_imm_4_1 = (instruction & (0xf << 8)) >> 8;
+        let b_imm_11 = (instruction & (0x1 << 7)) >> 7;
+        let b_imm = (((b_imm_12 << 12)
+            | (b_imm_11 << 11)
+            | (b_imm_10_5 << 5)
+            | (b_imm_4_1 << 1))
+            << 19) as i32
+            >> 19;
 
         val.imm32 = if val.is_store {
             s_imm
@@ -160,6 +170,8 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
             i_imm
         } else if val.is_jal {
             j_imm
+        } else if val.is_branch {
+            b_imm
         } else {
             if val.instruction != 0 {
                 println!(

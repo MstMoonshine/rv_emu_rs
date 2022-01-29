@@ -18,6 +18,17 @@ enum ALUOperation {
     AND = 0b111,
 }
 
+#[derive(Debug, Clone, Copy, TryFromPrimitive)]
+#[repr(u32)]
+enum BranchType {
+    BEQ = 0b000,
+    BNE = 0b001,
+    BLT = 0b100,
+    BGE = 0b101,
+    BLTU = 0b110,
+    BGEU = 0b111,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct ExecutionValues {
     pub rd: u32,
@@ -38,6 +49,7 @@ pub struct ExecutionValues {
     pub is_lui: bool,
     pub is_jal: bool,
     pub is_jalr: bool,
+    pub is_branch: bool,
 }
 
 impl ExecutionValues {
@@ -61,6 +73,7 @@ impl ExecutionValues {
             is_lui: false,
             is_jal: false,
             is_jalr: false,
+            is_branch: false,
         }
     }
 }
@@ -118,19 +131,12 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
         exe_val.is_lui = de_val.is_lui;
         exe_val.is_jal = de_val.is_jal;
         exe_val.is_jalr = de_val.is_jalr;
+        exe_val.is_branch = de_val.is_branch;
 
         exe_val.pc = de_val.pc;
         exe_val.pc_plus_four = de_val.pc_plus_four;
 
-        pc_update_info.should_update =
-            exe_val.is_jal || exe_val.is_jalr;
-
-        if exe_val.pc == 0x4000_0054 {
-            let _hook = 1;
-        }
-
-        let is_register_op =
-            (de_val.opcode >> 5) & 1 == 1 && !exe_val.is_jalr;
+        let is_register_op = (de_val.opcode >> 5) & 1 == 1;
         let is_alternate = (de_val.imm11_0 >> 10) & 1 == 1;
 
         let right_operant = if is_register_op {
@@ -139,88 +145,98 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
             de_val.imm11_0
         };
 
-        exe_val.alu_result = if exe_val.is_jal {
-            let pc_new =
-                (exe_val.pc as i32 + exe_val.imm32) as u32;
-            pc_update_info.pc_new = pc_new;
-            pc_new
+        // ALU
+        let add_result = if exe_val.is_jalr {
+            (de_val.rs1 as i32 + de_val.imm32) as u32
+        } else if exe_val.is_jal || exe_val.is_branch {
+            (exe_val.pc as i32 + exe_val.imm32) as u32
+        } else if is_register_op {
+            if is_alternate {
+                de_val.rs1 - de_val.rs2
+            } else {
+                de_val.rs1 + de_val.rs2
+            }
         } else {
+            (de_val.rs1 as i32 + de_val.imm32) as u32
+        };
+
+        let sll_result = if is_register_op {
+            de_val.rs1 << (de_val.rs2 & 0x1f)
+        } else {
+            de_val.rs1 << (de_val.shamt)
+        };
+
+        let srl_result = {
+            let shamt = if is_register_op {
+                de_val.rs2
+            } else {
+                de_val.shamt
+            };
+
+            if is_alternate {
+                ((de_val.rs1 as i32) >> (shamt & 0x1f)) as u32 // SRA
+            } else {
+                de_val.rs1 >> (shamt & 0x1F) // SRL
+            }
+        };
+
+        let sltu_result = if de_val.rs1 < right_operant {
+            1_u32
+        } else {
+            0_u32
+        };
+
+        let slt_result =
+            if (de_val.rs1 as i32) < (right_operant as i32) {
+                1_u32
+            } else {
+                0_u32
+            };
+
+        let and_result = de_val.rs1 & right_operant;
+        let or_result = de_val.rs1 | right_operant;
+        let xor_result = de_val.rs1 ^ right_operant;
+
+        exe_val.alu_result =
             match ALUOperation::try_from(de_val.funct3) {
-                Ok(ALUOperation::ADD) => {
-                    if is_register_op {
-                        if is_alternate {
-                            de_val.rs1 - de_val.rs2
-                        } else {
-                            de_val.rs1 + de_val.rs2
-                        }
-                    } else {
-                        let val = (de_val.rs1 as i32
-                            + de_val.imm32)
-                            as u32;
-                        if de_val.is_jalr {
-                            pc_update_info.pc_new = val;
-                        }
-                        val
-                    }
-                }
-
-                Ok(ALUOperation::SLL) => {
-                    if is_register_op {
-                        de_val.rs1 << (de_val.rs2 & 0x1f)
-                    } else {
-                        de_val.rs1 << (de_val.shamt)
-                    }
-                }
-
-                Ok(ALUOperation::SRL) => {
-                    let shamt = if is_register_op {
-                        de_val.rs2
-                    } else {
-                        de_val.shamt
-                    };
-
-                    if is_alternate {
-                        ((de_val.rs1 as i32) >> (shamt & 0x1f))
-                            as u32 // SRA
-                    } else {
-                        de_val.rs1 >> (shamt & 0x1F) // SRL
-                    }
-                }
-                Ok(ALUOperation::SLTU) => {
-                    if de_val.rs1 < right_operant {
-                        1_u32
-                    } else {
-                        0_u32
-                    }
-                }
-                Ok(ALUOperation::SLT) => {
-                    if (de_val.rs1 as i32)
-                        < (right_operant as i32)
-                    {
-                        1_u32
-                    } else {
-                        0_u32
-                    }
-                }
-
-                Ok(ALUOperation::AND) => {
-                    de_val.rs1 & right_operant
-                }
-                Ok(ALUOperation::OR) => {
-                    de_val.rs1 | right_operant
-                }
-                Ok(ALUOperation::XOR) => {
-                    de_val.rs1 ^ right_operant
-                }
-
+                Ok(ALUOperation::ADD) => add_result,
+                Ok(ALUOperation::SLL) => sll_result,
+                Ok(ALUOperation::SRL) => srl_result,
+                Ok(ALUOperation::SLTU) => sltu_result,
+                Ok(ALUOperation::SLT) => slt_result,
+                Ok(ALUOperation::AND) => and_result,
+                Ok(ALUOperation::OR) => or_result,
+                Ok(ALUOperation::XOR) => xor_result,
                 _ => {
                     // println!("Unimplemented! funct3 = {:#05b}, instruction = {:#010x}",
                     //     de_val.funct3,
                     //     de_val.instruction);
                     0_u32
                 }
-            }
+            };
+
+        if exe_val.is_branch {
+            let _hook = 1;
         }
+
+        let beq_result = de_val.rs1 == de_val.rs2;
+        let slt_result = slt_result == 1;
+        let sltu_result = sltu_result == 1;
+        let branch_condition_met = exe_val.is_branch
+            && match BranchType::try_from(de_val.funct3) {
+                Ok(BranchType::BEQ) => beq_result,
+                Ok(BranchType::BNE) => !beq_result,
+                Ok(BranchType::BLT) => slt_result,
+                Ok(BranchType::BGE) => !slt_result,
+                Ok(BranchType::BLTU) => sltu_result,
+                Ok(BranchType::BGEU) => !sltu_result,
+                _ => false,
+            };
+
+        pc_update_info.should_update = exe_val.is_jal
+            || exe_val.is_jalr
+            || branch_condition_met;
+        pc_update_info.pc_new = add_result;
     }
 
     fn should_stall(&self) -> bool {
