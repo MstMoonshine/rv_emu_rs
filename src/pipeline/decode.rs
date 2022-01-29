@@ -24,6 +24,7 @@ pub struct DecodedValues {
     pub is_store: bool,
     pub is_load: bool,
     pub is_lui: bool,
+    pub is_auipc: bool,
     pub is_jal: bool,
     pub is_jalr: bool,
     pub is_branch: bool,
@@ -51,6 +52,7 @@ impl DecodedValues {
             is_store: false,
             is_load: false,
             is_lui: false,
+            is_auipc: false,
             is_jal: false,
             is_jalr: false,
             is_branch: false,
@@ -125,6 +127,7 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
             val.opcode & 0b101_1111 == 0b001_0011;
         val.is_store = val.opcode == 0b010_0011;
         val.is_lui = val.opcode == 0b011_0111;
+        val.is_auipc = val.opcode == 0b001_0111;
         val.is_load = val.opcode == 0b000_0011;
         val.is_jal = val.opcode == 0b110_1111;
         val.is_jalr = val.opcode == 0b110_0111;
@@ -161,7 +164,7 @@ impl PipelineStage<InstructionFetchValues, DecodedValues>
 
         val.imm32 = if val.is_store {
             s_imm
-        } else if val.is_lui {
+        } else if val.is_lui || val.is_auipc {
             u_imm
         } else if val.is_alu_operation
             || val.is_load

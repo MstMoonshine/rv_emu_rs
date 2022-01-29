@@ -47,6 +47,7 @@ pub struct ExecutionValues {
     pub is_store: bool,
     pub is_load: bool,
     pub is_lui: bool,
+    pub is_auipc: bool,
     pub is_jal: bool,
     pub is_jalr: bool,
     pub is_branch: bool,
@@ -71,6 +72,7 @@ impl ExecutionValues {
             is_store: false,
             is_load: false,
             is_lui: false,
+            is_auipc: false,
             is_jal: false,
             is_jalr: false,
             is_branch: false,
@@ -129,6 +131,7 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
         exe_val.is_store = de_val.is_store;
         exe_val.is_load = de_val.is_load;
         exe_val.is_lui = de_val.is_lui;
+        exe_val.is_auipc = de_val.is_auipc;
         exe_val.is_jal = de_val.is_jal;
         exe_val.is_jalr = de_val.is_jalr;
         exe_val.is_branch = de_val.is_branch;
@@ -148,7 +151,10 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
         // ALU
         let add_result = if exe_val.is_jalr {
             (de_val.rs1 as i32 + de_val.imm32) as u32
-        } else if exe_val.is_jal || exe_val.is_branch {
+        } else if exe_val.is_jal
+            || exe_val.is_branch
+            || exe_val.is_auipc
+        {
             (exe_val.pc as i32 + exe_val.imm32) as u32
         } else if is_register_op {
             if is_alternate {
@@ -214,10 +220,6 @@ impl PipelineStage<DecodedValues, ExecutionValues> for Execute {
                     0_u32
                 }
             };
-
-        if exe_val.is_branch {
-            let _hook = 1;
-        }
 
         let beq_result = de_val.rs1 == de_val.rs2;
         let slt_result = slt_result == 1;
