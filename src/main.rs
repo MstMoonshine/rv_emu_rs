@@ -41,8 +41,11 @@ fn run(
 
 pub fn main() {
     let rom_file = get_file_as_u32_vec(&String::from(
-        "test_payloads/build/test.bin",
+        "test_payloads/build/quicksort.bin",
     ));
+
+    println!("File len: {}", rom_file.len());
+    println!("{} instructions", rom_file.len() / 4);
 
     let (reg, mem) = run(&rom_file);
 
