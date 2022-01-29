@@ -1,3 +1,4 @@
 /target
 .vscode/*
 test_payloads/build/*
+test_payloads/.DS_Store

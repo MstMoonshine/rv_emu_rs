@@ -3,6 +3,26 @@
 int get_the_answer() {
 	volatile int *ptr = (int *)BASE;
 	*ptr = 42;
+	int i = 0x11223344;
+
+	ptr++;
+
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
+	*ptr++ = i++;
 
 	return 42;
 }
