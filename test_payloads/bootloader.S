@@ -1,3 +1,3 @@
 .section .bootloader
 	// setup stack
-	li	sp, 0x80000100
+	li	sp, 0x80000200
