@@ -85,13 +85,13 @@ int main()
     // Value assignment done in stack to avoid usage of data section.
     // int data[] = { 8, 7, 2, 1, 0, 9, 6 };
     int data[LEN];
-    data[0] = 8;
-    data[1] = 7;
-    data[2] = 2;
-    data[3] = 1;
-    data[4] = 4;
-    data[5] = 9;
-    data[6] = 6;
+    data[0] = 0xaf37be7;
+    data[1] = 0x7dd0d4bf;
+    data[2] = 0x4994fe31;
+    data[3] = 0x7e6186cf;
+    data[4] = 0x38e1d337;
+    data[5] = 0x2e9548eb;
+    data[6] = 0x1cbd0f06;
 
     int n = sizeof(data) / sizeof(data[0]);
 

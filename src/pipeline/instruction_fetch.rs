@@ -89,7 +89,7 @@ impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
             .expect("Instruction Fetch Error");
         
         // tracing
-        println!("{}:\tpc = {:#010x}", self.cycle.borrow(), addr);
+        // println!("{}:\tpc = {:#010x}", self.cycle.borrow(), addr);
 
         if_val.pc_plus_four = if_val.pc + 4;
         self.cycle.replace_with(|&mut c| c + 1);
