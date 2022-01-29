@@ -32,6 +32,8 @@ pub struct InstructionFetch {
 
     bus: Arc<Bus>,
 
+    cycle: RefCell<u64>,
+
     if_val: RefCell<InstructionFetchValues>,
     if_val_ready: RefCell<InstructionFetchValues>,
 }
@@ -46,6 +48,8 @@ impl InstructionFetch {
 
             bus: bus.clone(),
 
+            cycle: RefCell::new(1_u64),
+
             if_val: RefCell::new(InstructionFetchValues::new(
                 bus.memory_layout.rom_start as u32,
             )),
@@ -55,6 +59,10 @@ impl InstructionFetch {
                 ),
             ),
         }
+    }
+
+    pub fn should_halt(&self) -> bool {
+        *self.cycle.borrow() == 0
     }
 }
 
@@ -79,11 +87,16 @@ impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
             .bus
             .read(addr, MemoryAccessWidth::Word)
             .expect("Instruction Fetch Error");
-
+        
         // tracing
-        println!("pc = {:#010x}", addr);
+        println!("{}:\tpc = {:#010x}", self.cycle.borrow(), addr);
 
         if_val.pc_plus_four = if_val.pc + 4;
+        self.cycle.replace_with(|&mut c| c + 1);
+
+        if if_val.instruction == 0 {
+            self.cycle.replace(0);
+        }
     }
 
     fn should_stall(&self) -> bool {

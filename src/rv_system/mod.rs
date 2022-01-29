@@ -56,9 +56,11 @@ impl RV32System {
     }
 
     pub fn run(&self) {
-        for _ in
-            0..((self.bus.memory_layout.rom_size / 4 + 1) * 5)
-        {
+        loop {
+            if self.stage_if.should_halt() {
+                break;
+            }
+
             self.compute();
             self.latch_next();
 
