@@ -1,6 +1,6 @@
 use std::{
     fs::{self, File},
-    io::Read,
+    io::Read, env, process::exit,
 };
 
 use bus::RAM_START;
@@ -13,7 +13,7 @@ mod register;
 mod rv_system;
 
 fn get_file_as_u32_vec(filename: &String) -> Vec<u32> {
-    let mut f = File::open(&filename).expect("no file found");
+    let mut f = File::open(&filename).expect("File not found");
     let metadata = fs::metadata(&filename)
         .expect("unable to read metadata");
     let mut buffer = vec![0; metadata.len() as usize];
@@ -39,43 +39,52 @@ fn run(
     (rv32_sys.get_reg(), rv32_sys.get_mem(0x210))
 }
 
+fn get_output(reg: &[Register32; NUM_REGISTER], mem: &Vec<u32>) -> String {
+
+    let reg_out = reg.into_iter().zip(0..reg.len())
+    .map(|(reg, i)| {
+        let mut out = format!("x{}: {:#010x}\t", i, reg.0);
+        if (i + 1) % 4 == 0 {
+            out = out + "\n";
+        }
+        out
+    })
+    .collect::<String>();
+
+    let mem_out = mem.into_iter().zip(0..mem.len())
+    .map(|(val, i)| {
+        let mut out = format!("{:#010x} ", val);
+        if i % 4 == 0 {
+            out = String::from(format!("\n{:#010x}: ", RAM_START + i * 16))
+                + &out;
+        }
+        out
+    })
+    .collect::<String>();
+
+    let output = String::from("Register Dump:\n\n") + &reg_out
+        + &"\nMemory Dump:\n" + &mem_out;
+
+    output
+}
+
 pub fn main() {
-    let rom_file = get_file_as_u32_vec(&String::from(
-        "test_payloads/build/quicksort.bin",
-    ));
+
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        println!("\nUsage: {} [filename]\n", args[0]);
+        exit(0);
+    }
+
+    let file_path = &args[1];
+    let rom_file = get_file_as_u32_vec(file_path);
 
     println!("File len: {}", rom_file.len());
-    println!("{} instructions", rom_file.len() / 4);
+    println!("{} instructions\n", rom_file.len() / 4);
 
     let (reg, mem) = run(&rom_file);
 
-    let mut output = String::new();
-
-    output = output + &format!("Register dump:\n");
-    for i in 0..31 {
-        let reg_x = reg[i].0;
-        output = output + &format!("x{}: {:#010x}\n", i, reg_x);
-    }
-
-    output = output + &format!("-----\n");
-    output = output + &format!("Memory dump:\n");
-    for i in 0..mem.len() / 4 {
-        let val = (
-            mem[i * 4],
-            mem[i * 4 + 1],
-            mem[i * 4 + 2],
-            mem[i * 4 + 3],
-        );
-        output = output
-            + &format!(
-                "{:#010x}: {:#010x} {:#010x} {:#010x} {:#010x}\n",
-                RAM_START + &i * 16,
-                val.0,
-                val.1,
-                val.2,
-                val.3,
-            )
-    }
+    let output = get_output(&reg, &mem);
 
     println!("{}", output);
 }
