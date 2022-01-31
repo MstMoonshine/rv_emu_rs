@@ -43,12 +43,14 @@ impl PipelineStage<MemoryAccessValues, WriteBackValues>
         let is_lui = mem_val.is_lui;
         let is_jal = mem_val.is_jal;
         let is_jalr = mem_val.is_jalr;
+        let is_auipc = mem_val.is_auipc;
 
         let should_write_back = is_alu_operation
             | is_load
             | is_lui
             | is_jal
-            | is_jalr;
+            | is_jalr
+            | is_auipc;
 
         if should_write_back {
             if rd != 0 {

@@ -17,6 +17,7 @@ pub struct MemoryAccessValues {
     pub is_store: bool,
     pub is_load: bool,
     pub is_lui: bool,
+    pub is_auipc: bool,
     pub is_jal: bool,
     pub is_jalr: bool,
 
@@ -36,6 +37,7 @@ impl MemoryAccessValues {
             is_store: false,
             is_load: false,
             is_lui: false,
+            is_auipc: false,
             is_jal: false,
             is_jalr: false,
 
@@ -99,6 +101,7 @@ impl PipelineStage<ExecutionValues, MemoryAccessValues>
         mem_val.is_store = exe_val.is_store;
         mem_val.is_load = exe_val.is_load;
         mem_val.is_lui = exe_val.is_lui;
+        mem_val.is_auipc = exe_val.is_auipc;
         mem_val.is_jal = exe_val.is_jal;
         mem_val.is_jalr = exe_val.is_jalr;
         mem_val.imm32 = exe_val.imm32;
