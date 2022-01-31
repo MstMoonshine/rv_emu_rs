@@ -7,8 +7,6 @@ SECTIONS
 	.text :
 	{
 		*(.bootloader)
-
-		*(.text.init)
 		*(.text)
 	}
 

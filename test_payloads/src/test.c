@@ -71,7 +71,7 @@ int test_loop()
 	return 0;
 }
 
-__attribute__((section(".text.init")))
+// __attribute__((section(".text.init")))
 int main() {
 	int a = get_the_answer();
 	int b = test_loop();

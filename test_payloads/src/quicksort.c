@@ -79,7 +79,7 @@ void printArray(int array[], int size, int sorted)
 #define LEN 7
 
 // main function
-__attribute__((section(".text.init")))
+// __attribute__((section(".text.init")))
 int main()
 {
     // Value assignment done in stack to avoid usage of data section.

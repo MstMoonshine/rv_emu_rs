@@ -1,0 +1,31 @@
+DOCKER = docker
+DOCKERFILE_DIR = ./docker
+PAYLOADS_DIR = test_payloads
+DOCKER_COMMANDS = make -C /$(PAYLOADS_DIR)
+PAYLOADS_ABS = $(shell pwd)/$(PAYLOADS_DIR)
+PAYLOADS_SRC = $(wildcard $(PAYLOADS_DIR)/*.c)
+PAYLOADS_SRC_FILE = $(notdir $(PAYLOADS_SRC))
+TARGETS_DIR = $(PAYLOADS_DIR)/build
+TARGETS = $(TARGETS_DIR)/$(PAYLOADS_SRC_FILE:.c=.bin)
+
+RISCV64 := riscv64-unknown-elf
+RISCV32 := riscv32-unknown-elf
+ifneq (, $(shell which $(RISCV32)-gcc))
+	GNU_TOOL := $(RISCV32)
+else ifneq (, $(shell which $(RISCV64)-gcc))
+	GNU_TOOL := $(RISCV64)
+endif
+
+all: $(TARGETS)
+
+$(TARGETS): $(PAYLOADS_SRC_FILE)
+ifneq (, $(GNU_TOOL))
+	make -C $(PAYLOADS_DIR)
+else
+	$(DOCKER) buildx build --platform linux/amd64 -t riscv-toolchain $(DOCKERFILE_DIR)
+	$(DOCKER) run --rm -v $(PAYLOADS_ABS):/$(PAYLOADS_DIR) --name riscv-dev riscv-toolchain $(DOCKER_COMMANDS)
+	$(DOCKER) rmi riscv-toolchain
+endif
+
+clean:
+	@make clean -C $(PAYLOADS_DIR)
