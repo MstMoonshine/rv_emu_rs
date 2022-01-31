@@ -87,7 +87,7 @@ impl PipelineStage<PCUpdateInfo, InstructionFetchValues>
             .bus
             .read(addr, MemoryAccessWidth::Word)
             .expect("Instruction Fetch Error");
-        
+
         // tracing
         // println!("{}:\tpc = {:#010x}", self.cycle.borrow(), addr);
 

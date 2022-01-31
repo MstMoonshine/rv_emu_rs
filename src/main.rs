@@ -1,6 +1,8 @@
 use std::{
+    env,
     fs::{self, File},
-    io::Read, env, process::exit,
+    io::Read,
+    process::exit,
 };
 
 use bus::RAM_START;
@@ -39,37 +41,46 @@ fn run(
     (rv32_sys.get_reg(), rv32_sys.get_mem(0x210))
 }
 
-fn get_output(reg: &[Register32; NUM_REGISTER], mem: &Vec<u32>) -> String {
+fn get_output(
+    reg: &[Register32; NUM_REGISTER],
+    mem: &Vec<u32>,
+) -> String {
+    let reg_out = reg
+        .into_iter()
+        .zip(0..reg.len())
+        .map(|(reg, i)| {
+            let mut out = format!("x{}: {:#010x}\t", i, reg.0);
+            if (i + 1) % 4 == 0 {
+                out = out + "\n";
+            }
+            out
+        })
+        .collect::<String>();
 
-    let reg_out = reg.into_iter().zip(0..reg.len())
-    .map(|(reg, i)| {
-        let mut out = format!("x{}: {:#010x}\t", i, reg.0);
-        if (i + 1) % 4 == 0 {
-            out = out + "\n";
-        }
-        out
-    })
-    .collect::<String>();
+    let mem_out = mem
+        .into_iter()
+        .zip(0..mem.len())
+        .map(|(val, i)| {
+            let mut out = format!("{:#010x} ", val);
+            if i % 4 == 0 {
+                out = String::from(format!(
+                    "\n{:#010x}: ",
+                    RAM_START + i * 16
+                )) + &out;
+            }
+            out
+        })
+        .collect::<String>();
 
-    let mem_out = mem.into_iter().zip(0..mem.len())
-    .map(|(val, i)| {
-        let mut out = format!("{:#010x} ", val);
-        if i % 4 == 0 {
-            out = String::from(format!("\n{:#010x}: ", RAM_START + i * 16))
-                + &out;
-        }
-        out
-    })
-    .collect::<String>();
-
-    let output = String::from("Register Dump:\n\n") + &reg_out
-        + &"\nMemory Dump:\n" + &mem_out;
+    let output = String::from("Register Dump:\n\n")
+        + &reg_out
+        + &"\nMemory Dump:\n"
+        + &mem_out;
 
     output
 }
 
 pub fn main() {
-
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         println!("\nUsage: {} [filename]\n", args[0]);

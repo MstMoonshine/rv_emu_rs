@@ -1,3 +1,0 @@
-- [] Fix zero stage bootloader
-- [] Implement boot bootloader (no need to mark section name for `main`)
-- [] Resolve data section problem
