@@ -10,7 +10,7 @@ SECTIONS
 		*(.text)
 	}
 
-	. = ALIGN(0x1000);
+	. = ALIGN(0x100);
 	.rodata :
 	{
 		*(.rdata)

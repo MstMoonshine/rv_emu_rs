@@ -79,17 +79,7 @@ void printArray(int array[], int size, int sorted)
 
 int main()
 {
-    // int data[] = { 8, 7, 2, 1, 0, 9, 6 };
-    int data[7];
-
-    data[0] = 8;
-    data[1] = 7;
-    data[2] = 2;
-    data[3] = 1;
-    data[4] = 0;
-    data[5] = 9;
-    data[6] = 6;
-
+    int data[] = { 8, 7, 2, 1, 0, 9, 6 };
 
     int n = sizeof(data) / sizeof(data[0]);
 
