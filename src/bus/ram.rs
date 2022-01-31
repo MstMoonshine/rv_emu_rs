@@ -21,15 +21,21 @@ impl RAMDevice {
     }
 
     pub fn mem_dump(&self, size: usize) {
-        let dump_region = &self.ram.borrow().clone()[..size / 4];
-
-        for (i, val) in dump_region.into_iter().enumerate() {
-            println!(
-                "{:#010x}: {:#010x}",
-                RAM_START + &i * 4,
-                val,
-            )
-        }
+        let mem_out = self.ram.borrow().to_owned()
+        .into_iter()
+        .zip(0..size / 4)
+        .map(|(val, i)| {
+            let mut out = format!("{:#010x} ", val);
+            if i % 4 == 0 {
+                out = String::from(format!(
+                    "\n{:#010x}: ",
+                    RAM_START + i * 4
+                )) + &out;
+            }
+            out
+        })
+        .collect::<String>();
+        println!("{}", mem_out);
     }
 }
 
