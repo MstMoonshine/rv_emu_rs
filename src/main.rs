@@ -38,7 +38,7 @@ fn run(
     let rv32_sys = RV32System::new(rom_file);
     rv32_sys.run();
 
-    (rv32_sys.get_reg(), rv32_sys.get_mem(0x210))
+    (rv32_sys.get_reg(), rv32_sys.get_mem(0x1010))
 }
 
 fn get_output(
@@ -65,7 +65,7 @@ fn get_output(
             if i % 4 == 0 {
                 out = String::from(format!(
                     "\n{:#010x}: ",
-                    RAM_START + i * 16
+                    RAM_START + i * 4
                 )) + &out;
             }
             out
@@ -90,8 +90,18 @@ pub fn main() {
     let file_path = &args[1];
     let rom_file = get_file_as_u32_vec(file_path);
 
-    println!("File len: {}", rom_file.len());
-    println!("{} instructions\n", rom_file.len() / 4);
+    let (reg, mem) = run(&rom_file);
+
+    let output = get_output(&reg, &mem);
+
+    println!("{}", output);
+}
+
+#[cfg(test)]
+#[test]
+pub fn test() {
+    let file_path = "test_payloads/build/quicksort.bin".to_string();
+    let rom_file = get_file_as_u32_vec(&file_path);
 
     let (reg, mem) = run(&rom_file);
 

@@ -58,7 +58,7 @@ fn get_output(
             if i % 4 == 0 {
                 out = String::from(format!(
                     "\n{:#010x}: ",
-                    RAM_START + i * 16
+                    RAM_START + i * 4
                 )) + &out;
             }
             out
