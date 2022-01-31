@@ -1,4 +1,7 @@
 DOCKER = docker
+ifeq (Linux, $(shell uname))
+	DOCKER := sudo docker
+endif
 DOCKERFILE_DIR = ./docker
 PAYLOADS_DIR = test_payloads
 DOCKER_COMMANDS = make -C /$(PAYLOADS_DIR)
