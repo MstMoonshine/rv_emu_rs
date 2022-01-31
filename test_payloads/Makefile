@@ -33,7 +33,6 @@ OBJDUMP_FLAGS = -Mnumeric,no-aliases
 all: dir $(addprefix $(target_dir)/, $(targets))
 
 dir:
-	echo $(GNU_TOOL)
 	mkdir -p $(target_dir)
 
 $(target_dir)/%.elf: src/%.c
