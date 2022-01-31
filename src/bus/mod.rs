@@ -17,7 +17,7 @@ pub const ROM_START: usize = 0x4000_0000;
 pub const RAM_START: usize = 0x8000_0000;
 
 // const _ROM_SIZE: usize = 0x4000_0000;
-pub const RAM_SIZE: usize = 0x1000;
+pub const RAM_SIZE: usize = 0x1100;
 
 pub struct MemoryLayout {
     pub rom_start: usize,

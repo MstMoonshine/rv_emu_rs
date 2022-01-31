@@ -7,6 +7,7 @@ PAYLOADS_DIR = test_payloads
 DOCKER_COMMANDS = make -C /$(PAYLOADS_DIR)
 PAYLOADS_ABS = $(shell pwd)/$(PAYLOADS_DIR)
 PAYLOADS_SRC = $(wildcard $(PAYLOADS_DIR)/src/*.c)
+PAYLOADS_DEP = $(PAYLOADS_DIR)/link.lds $(PAYLOADS_DIR)/bootloader.S
 PAYLOADS_SRC_FILE = $(notdir $(PAYLOADS_SRC))
 TARGETS_DIR = $(PAYLOADS_DIR)/build
 TARGETS = $(TARGETS_DIR)/$(PAYLOADS_SRC_FILE:.c=.bin)
@@ -23,7 +24,7 @@ endif
 
 all: $(TARGETS) wasm
 
-$(TARGETS): $(PAYLOADS_SRC)
+$(TARGETS): $(PAYLOADS_SRC) $(PAYLOADS_DEP)
 ifneq (, $(GNU_TOOL))
 	make -C $(PAYLOADS_DIR)
 else

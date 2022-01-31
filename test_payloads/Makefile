@@ -35,12 +35,14 @@ all: dir $(addprefix $(target_dir)/, $(targets))
 dir:
 	mkdir -p $(target_dir)
 
-$(target_dir)/%.elf: src/%.c
+$(target_dir)/%.elf: src/%.c $(asm) $(lds)
 	$(CC) $< $(asm) -o $@ $(FLAGS)
 
 $(target_dir)/%.bin: $(target_dir)/%.elf
 	$(OBJDUMP) $(OBJDUMP_FLAGS) -d $< > $<.objdump
-	$(OBJCOPY) -O binary $< $@
+	$(OBJCOPY) -O binary $< $@.tmp
+	{ cat $@.tmp; printf '\x34\x12\xfe\xca'; } > $@
+	rm $@.tmp
 
 clean:
 	-@rm -rf $(target_dir)
