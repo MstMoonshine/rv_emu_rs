@@ -41,4 +41,4 @@ run: $(TARGETS)
 
 clean:
 	make clean -C $(PAYLOADS_DIR)
-	cargo clean
+	# cargo clean
