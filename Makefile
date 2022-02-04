@@ -23,7 +23,9 @@ else ifneq (, $(shell which $(RISCV64)-gcc))
 	GNU_TOOL := $(RISCV64)
 endif
 
-all: $(TARGETS) wasm
+all: payloads wasm
+
+payloads: $(TARGETS)
 
 $(TARGETS): $(PAYLOADS_SRC) $(PAYLOADS_DEP)
 ifneq (, $(GNU_TOOL))
@@ -39,7 +41,7 @@ wasm:
 	wasm-pack build --target web
 
 run: $(TARGETS)
-	cargo run $(PAYLOAD)
+	cargo run -q $(PAYLOAD)
 
 clean:
 	make clean -C $(PAYLOADS_DIR)
