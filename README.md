@@ -1,6 +1,6 @@
 # 32-bit RISC-V Emulator in Rust
 
-This is a RISC-V emulator supoorting RV32I instruction set written in Rust, inspired by [Francis Stokes's RISC-V Emulator in Typescript](https://github.com/LowLevelJavaScript/RISC-V-Emulator). (He made a fascinating series of [videos](https://www.youtube.com/watch?v=ER7h4ZTe19A&list=PLP29wDx6QmW4sXTvFYgbHrLygqH8_oNEH) on this topic!) You can either run this repository as a stand-alone binary or a WASM package, which can be embeded to a website. [Try it out here!](https://mstmoonshine.github.io/p/rv32_emu/)
+This is a RISC-V emulator supoorting RV32I instruction set written in Rust, inspired by [Francis Stokes's RISC-V Emulator in Typescript](https://github.com/LowLevelJavaScript/RISC-V-Emulator). (He made a fascinating series of [videos](https://www.youtube.com/watch?v=ER7h4ZTe19A&list=PLP29wDx6QmW4sXTvFYgbHrLygqH8_oNEH) on this topic!) You can either run this repository as a stand-alone binary or a WASM package, which can be embeded to a website. [Try it out here!](https://mstmoonshine.github.io/p/rv32-emu/)
 
 ---
 
@@ -17,6 +17,7 @@ The emulator supports running customized C program. To run your own C program, p
 
 Note:
 - The only output method is using register/memory dump. Currently no privileged level is supported so no syscall can be handled, which means functions like `printf` are not allowed.
+- Memory starts at `0x8000_0000`
 - `.bin` suffix is necessary, which will be automatically generated along with the elf file.
 
 ### WASM Package
