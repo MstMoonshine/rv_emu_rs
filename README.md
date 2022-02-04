@@ -11,13 +11,13 @@ Make sure you have rust developing environment installed. RISC-V GNU Toolchain i
 ### Stand alone binary
 
 The emulator supports running customized C program. To run your own C program, perform the following steps:
-	1. Put the C file in `test_payloads/src` directory
-	2. Run `make` in the top directory
-	3. Run `cargo run test_payloads/build/[filename].bin`
+1. Put the C file in `test_payloads/src` directory
+2. Run `make` in the top directory
+3. Run `cargo run test_payloads/build/[filename].bin`
 
 Note:
-	- The only output method is using register/memory dump. Currently no privileged level is supported so no syscall can be handled, which means functions like `printf` are not allowed.
-	- `.bin` suffix is necessary, which will be automatically generated along with the elf file.
+- The only output method is using register/memory dump. Currently no privileged level is supported so no syscall can be handled, which means functions like `printf` are not allowed.
+- `.bin` suffix is necessary, which will be automatically generated along with the elf file.
 
 ### WASM Package
 
