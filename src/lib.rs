@@ -32,7 +32,7 @@ fn run(
     let rv32_sys = RV32System::new(rom_file);
     rv32_sys.run();
 
-    (rv32_sys.get_reg(), rv32_sys.get_mem(mem_dump_size / 4))
+    (rv32_sys.get_reg(), rv32_sys.get_mem(mem_dump_size))
 }
 
 fn get_output(
