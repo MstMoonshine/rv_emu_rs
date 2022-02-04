@@ -27,11 +27,12 @@ fn get_rom_file(rom_file: &[u8]) -> Vec<u32> {
 
 fn run(
     rom_file: &[u32],
+    mem_dump_size: usize
 ) -> ([Register32; NUM_REGISTER], Vec<u32>) {
     let rv32_sys = RV32System::new(rom_file);
     rv32_sys.run();
 
-    (rv32_sys.get_reg(), rv32_sys.get_mem(0x210))
+    (rv32_sys.get_reg(), rv32_sys.get_mem(mem_dump_size / 4))
 }
 
 fn get_output(
@@ -74,10 +75,10 @@ fn get_output(
 }
 
 #[wasm_bindgen]
-pub fn emulate(rom_file: &[u8]) -> String {
+pub fn emulate(rom_file: &[u8], mem_dump_size: usize) -> String {
     let rom = get_rom_file(rom_file);
 
-    let (reg, mem) = run(&rom);
+    let (reg, mem) = run(&rom, mem_dump_size);
 
     let output = get_output(&reg, &mem);
 

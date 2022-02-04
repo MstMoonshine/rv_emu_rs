@@ -31,7 +31,9 @@ init()
         // your codes here...
 
         ...
-        emulate(romArray); // romArray is a u8 array containing binary codes
+        // romArray is a u8 array containing binary codes
+        // memSize is the length of memory dump
+        emulate(romArray, memSize);
         ...
     });
 
