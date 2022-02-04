@@ -5,6 +5,7 @@ endif
 DOCKERFILE_DIR = ./docker
 PAYLOADS_DIR = test_payloads
 DOCKER_COMMANDS = make -C /$(PAYLOADS_DIR)
+DOCKER_IMAGE = riscv-toolchain-emulator-payload
 PAYLOADS_ABS = $(shell pwd)/$(PAYLOADS_DIR)
 PAYLOADS_SRC = $(wildcard $(PAYLOADS_DIR)/src/*.c)
 PAYLOADS_DEP = $(PAYLOADS_DIR)/link.lds $(PAYLOADS_DIR)/bootloader.S
@@ -28,9 +29,10 @@ $(TARGETS): $(PAYLOADS_SRC) $(PAYLOADS_DEP)
 ifneq (, $(GNU_TOOL))
 	make -C $(PAYLOADS_DIR)
 else
-	$(DOCKER) buildx build --platform linux/amd64 -t riscv-toolchain $(DOCKERFILE_DIR)
-	$(DOCKER) run --rm -v $(PAYLOADS_ABS):/$(PAYLOADS_DIR) --name riscv-dev riscv-toolchain $(DOCKER_COMMANDS)
-	$(DOCKER) rmi riscv-toolchain
+ifeq (, $(shell $(DOCKER) images -q $(DOCKER_IMAGE)))
+	$(DOCKER) buildx build --platform linux/amd64 -t $(DOCKER_IMAGE) $(DOCKERFILE_DIR)
+endif
+	$(DOCKER) run --rm -v $(PAYLOADS_ABS):/$(PAYLOADS_DIR) --name riscv-dev $(DOCKER_IMAGE) $(DOCKER_COMMANDS)
 endif
 
 wasm:
